@@ -1,3 +1,4 @@
+https://github.com/DanielPelerman/GSB-544-Git
 ---
 title: Quarto Computations
 echo: false

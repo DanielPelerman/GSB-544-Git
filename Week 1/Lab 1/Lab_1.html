@@ -2200,17 +2200,21 @@ vertical-align: -.125em;
 </header>
 
 
+<section id="github-repository-link" class="level2">
+<h2 class="anchored" data-anchor-id="github-repository-link">Github Repository Link:</h2>
+<p><a href="https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%201/Lab%201">Link to Repository</a></p>
+</section>
 <section id="task-1" class="level2">
 <h2 class="anchored" data-anchor-id="task-1">Task 1</h2>
 <p>The table below shows the first 5 rows of the dataset <code>q1</code>, which give us a preview of the variables we’ll be using for visualization in <a href="#fig-plot1" class="quarto-xref">Figure 1</a>.</p>
-<div id="80dd17dc" class="cell" data-execution_count="1">
+<div id="da240fee" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>q1 <span class="op">=</span> pd.read_csv(<span class="st">&quot;Lab 1 Data/q1data.csv&quot;</span>)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>q1.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="10">
+<div class="cell-output cell-output-display" data-execution_count="28">
 <div>
 
 
@@ -2328,7 +2332,7 @@ Figure 1: Relationship between income and life expectancy.
 </div>
 </div>
 <p>The graph below demonstrates a plot for the <code>q1</code> dataset created using <code>geom_boxplot</code> instead of <code>geom_point</code>.</p>
-<div id="21522af7" class="cell" data-execution_count="3">
+<div id="5aeeca07" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> geom_boxplot</span>
@@ -2359,13 +2363,13 @@ Figure 1: Relationship between income and life expectancy.
 <section id="task-2" class="level2">
 <h2 class="anchored" data-anchor-id="task-2">Task 2</h2>
 <p>The Table below shows the first 5 rows of the dataset <code>q2</code>, which gives us a preview of the variables we’ll be using for visualization in <a href="#fig-plot2" class="quarto-xref">Figure 2</a>.</p>
-<div id="4202d634" class="cell" data-execution_count="4">
+<div id="055c2544" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>q2 <span class="op">=</span> pd.read_csv(<span class="st">&quot;Lab 1 Data/q2data.csv&quot;</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>q2.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="13">
+<div class="cell-output cell-output-display" data-execution_count="31">
 <div>
 
 
@@ -2482,7 +2486,7 @@ Figure 2: Relationship between imports and exports
 </div>
 </div>
 <p>The graph below demonstrates a plot for the <code>q2</code> dataset created using <code>geom_violin</code> instead of <code>geom_point</code>.</p>
-<div id="e1ab5421" class="cell" data-execution_count="6">
+<div id="f0a5b92c" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> geom_violin</span>
@@ -2505,13 +2509,13 @@ Figure 2: Relationship between imports and exports
 <section id="task-3" class="level2">
 <h2 class="anchored" data-anchor-id="task-3">Task 3</h2>
 <p>The Table below shows the first 5 rows of the dataset <code>q3</code>, which gives us a preview of the variables we’ll be using for visualization in <a href="#fig-plot3" class="quarto-xref">Figure 3</a>.</p>
-<div id="82f6db32" class="cell" data-execution_count="7">
+<div id="4d162e3e" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>q3 <span class="op">=</span> pd.read_csv(<span class="st">&quot;Lab 1 Data/q3data.csv&quot;</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>q3.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="16">
+<div class="cell-output cell-output-display" data-execution_count="34">
 <div>
 
 
@@ -2629,7 +2633,7 @@ Figure 3: Relationship between imports and exports
 </div>
 </div>
 <p>The graph below demonstrates a plot for the <code>q3</code> dataset created using <code>geom_SOMETHING</code> instead of <code>geom_point</code>.</p>
-<div id="0e1172df" class="cell" data-execution_count="9">
+<div id="61373c20" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> geom_smooth</span>

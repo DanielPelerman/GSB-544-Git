@@ -8,6 +8,8 @@ execute:
   message: false
   execute-dir: file
 ---
+## Github Repository Link:
+[Link to Repository](https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%201/Lab%201)
 
 ## Task 1
 The table below shows the first 5 rows of the dataset `q1`, which give us a preview of the variables we'll be using for visualization in @fig-plot1.

@@ -1,0 +1,54 @@
+---
+title: "Titanic Wrangling"
+format: html
+---
+
+In this practice activity you'll continue to work with the titanic dataset in ways that flex what you've learned about both data wrangling and data visualization.
+```{python}
+#| echo: true
+#| code-fold: true
+# Import the titanic dataset here
+import numpy as np
+import pandas as pd
+
+data_dir = "https://dlsun.github.io/pods/data/"
+df_titanic = pd.read_csv(data_dir + "titanic.csv")
+
+df_titanic
+```
+Filter the data to include passengers only. Calculate the joint distribution (cross-tab) between a passenger's class and where they embarked.
+
+```{python}
+#| echo: true
+#| code-fold: true
+# Code here
+df_passengers = df_titanic[df_titanic['class'].isin(["1st", "2nd", "3rd"])]
+# df_passengers = df_titanic[df_titanic["fare"] > 0]
+joint_dist = pd.crosstab(df_passengers['class'], df_passengers['embarked'])
+joint_dist
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+# Code here
+class_given_embarked = df_passengers.groupby("class")["embarked"].value_counts(normalize = True)
+embarked_given_class = df_passengers.groupby("embarked")["class"].value_counts(normalize = True)
+print(class_given_embarked)
+print(embarked_given_class)
+
+# about 70% of the 3rd class passengers embarked at Southampton
+# about 54% of Southampton passengers were in 3rd class
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+# Code here
+from plotnine import ggplot, geom_bar, aes
+
+(ggplot(df_passengers, aes(x = "embarked", fill = "class"))
++ geom_bar(alpha = 0.75, position = "fill"))
+```

@@ -2,6 +2,7 @@
 title: "Titanic Wrangling"
 format: html
 ---
+https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%202
 
 In this practice activity you'll continue to work with the titanic dataset in ways that flex what you've learned about both data wrangling and data visualization.
 ```{python}

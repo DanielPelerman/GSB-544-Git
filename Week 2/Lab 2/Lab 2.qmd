@@ -6,7 +6,7 @@ format:
 ---
 ### Repository Link  
 You can view the full project repository on [GitHub](https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%202/Lab%202). 
- 
+
 ### Step 0: Import Data and Declare Package Dependencies 
 See code.
 ```{python}

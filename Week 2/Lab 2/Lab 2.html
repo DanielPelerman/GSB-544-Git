@@ -2207,7 +2207,7 @@ vertical-align: -.125em;
 <section id="step-0-import-data-and-declare-package-dependencies" class="level3">
 <h3 class="anchored" data-anchor-id="step-0-import-data-and-declare-package-dependencies">Step 0: Import Data and Declare Package Dependencies</h3>
 <p>See code.</p>
-<div id="5616dee9" class="cell" data-execution_count="1">
+<div id="fa16b76f" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Core packages</span></span>
@@ -2250,7 +2250,7 @@ dtypes: float64(9), int64(1), object(3)
 memory usage: 3.3+ MB
 None</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="1163">
+<div class="cell-output cell-output-display" data-execution_count="23">
 <div>
 
 
@@ -2390,7 +2390,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <section id="step-2-clean-the-data" class="level3">
 <h3 class="anchored" data-anchor-id="step-2-clean-the-data">Step 2: Clean the Data</h3>
 <p>First, lets change the names of the PLU codes to what they represent:</p>
-<div id="98205d07" class="cell" data-execution_count="2">
+<div id="c9261ba7" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>avocado <span class="op">=</span> avocado.rename(columns<span class="op">=</span>{</span>
@@ -2400,7 +2400,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>avocado.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="1164">
+<div class="cell-output cell-output-display" data-execution_count="24">
 <div>
 
 
@@ -2513,7 +2513,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <ul>
 <li>Now, let’s see what regions are listed under the <code>geography</code> column:</li>
 </ul>
-<div id="7014f07b" class="cell" data-execution_count="3">
+<div id="f52220f8" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Unique Region Names</span></span>
@@ -2532,14 +2532,14 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <ul>
 <li>The geographies are all over the place. Some are states, some are metros, some are big regions, and some are the whole nation. Let’s make a new column called <code>region_type</code> that groups everything logically:</li>
 </ul>
-<div id="75b7314c" class="cell" data-execution_count="4">
+<div id="ee16fb40" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a column that classifies region types</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>avocado[<span class="st">&#39;region_type&#39;</span>] <span class="op">=</span> np.where(avocado[<span class="st">&#39;geography&#39;</span>].<span class="bu">str</span>.contains(<span class="st">&quot;Total U.S.&quot;</span>, case<span class="op">=</span><span class="va">False</span>), <span class="st">&#39;national&#39;</span>, np.where(avocado[<span class="st">&#39;geography&#39;</span>].isin([<span class="st">&#39;West&#39;</span>, <span class="st">&#39;Northeast&#39;</span>, <span class="st">&#39;Southeast&#39;</span>, <span class="st">&#39;SouthCentral&#39;</span>, <span class="st">&#39;Midsouth&#39;</span>, <span class="st">&#39;Plains&#39;</span>, <span class="st">&#39;GreatLakes&#39;</span>]), <span class="st">&#39;major_region&#39;</span>, np.where(avocado[<span class="st">&#39;geography&#39;</span>].isin([<span class="st">&#39;California&#39;</span>, <span class="st">&#39;Florida&#39;</span>]), <span class="st">&#39;state&#39;</span>, <span class="st">&#39;metro&#39;</span>)))</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>avocado.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="1166">
+<div class="cell-output cell-output-display" data-execution_count="26">
 <div>
 
 
@@ -2658,14 +2658,14 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <ul>
 <li>Now that all the data cleanly labeled, lets store it in a new DataFrame called <code>avocado_clean</code>, and let’s make sure the region classification worked correctly</li>
 </ul>
-<div id="6747661b" class="cell" data-execution_count="5">
+<div id="2b705014" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>avocado_clean <span class="op">=</span> avocado.copy()</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># confirm</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>avocado_clean[[<span class="st">&#39;geography&#39;</span>, <span class="st">&#39;region_type&#39;</span>]].drop_duplicates().sort_values(<span class="st">&#39;region_type&#39;</span>).head(<span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="1167">
+<div class="cell-output cell-output-display" data-execution_count="27">
 <div>
 
 
@@ -2789,7 +2789,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <h3 class="anchored" data-anchor-id="exercises-step-3">Exercises: Step 3</h3>
 <section id="which-major-geographical-region-sold-the-most-total-organic-small-hass-avocados-in-2017" class="level5">
 <h5 class="anchored" data-anchor-id="which-major-geographical-region-sold-the-most-total-organic-small-hass-avocados-in-2017">Which major geographical region sold the most total organic, small Hass avocados in 2017?</h5>
-<div id="78a9bb4c" class="cell" data-execution_count="6">
+<div id="18e555d8" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter for 2017 organic small Hass in major regions</span></span>
@@ -2806,7 +2806,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>region_sales.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="1168">
+<div class="cell-output cell-output-display" data-execution_count="28">
 <div>
 
 
@@ -2857,7 +2857,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <h3 class="anchored" data-anchor-id="exercises-step-4">Exercises: Step 4</h3>
 <section id="in-which-month-is-the-highest-average-volume-of-avocado-sales" class="level5">
 <h5 class="anchored" data-anchor-id="in-which-month-is-the-highest-average-volume-of-avocado-sales">In which month is the highest average volume of avocado sales?</h5>
-<div id="922e85c0" class="cell" data-execution_count="7">
+<div id="34363f5b" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>avocado_clean[<span class="st">&#39;date&#39;</span>] <span class="op">=</span> pd.to_datetime(avocado_clean[<span class="st">&#39;date&#39;</span>])</span>
@@ -2874,7 +2874,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>monthly_avg</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="1169">
+<div class="cell-output cell-output-display" data-execution_count="29">
 <div>
 
 
@@ -2953,7 +2953,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 </div>
 </div>
 </div>
-<div id="60da1ad7" class="cell" data-execution_count="8">
+<div id="ab50ccae" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>top_month <span class="op">=</span> monthly_avg.iloc[<span class="dv">0</span>]</span>
@@ -2969,7 +2969,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <h3 class="anchored" data-anchor-id="exercises-step-5">Exercises: Step 5</h3>
 <section id="which-metro-area-geographical-regions-sold-the-most-total-avocados" class="level5">
 <h5 class="anchored" data-anchor-id="which-metro-area-geographical-regions-sold-the-most-total-avocados">Which metro area geographical regions sold the most total avocados?</h5>
-<div id="32736e24" class="cell" data-execution_count="9">
+<div id="1fbee92f" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>metro_data <span class="op">=</span> avocado_clean.query(<span class="st">&quot;region_type == &#39;metro&#39;&quot;</span>)</span>
@@ -3025,7 +3025,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <h3 class="anchored" data-anchor-id="step-6-pivoting">Step 6: Pivoting</h3>
 <section id="create-a-data-set-with-only-these-california-regions-los-angeles-san-diego-sacramento-san-francisco" class="level5">
 <h5 class="anchored" data-anchor-id="create-a-data-set-with-only-these-california-regions-los-angeles-san-diego-sacramento-san-francisco">Create a data set with only these California regions (<code>Los Angeles</code>, <code>San Diego</code>, <code>Sacramento</code>, <code>San Francisco</code>)</h5>
-<div id="7bc983cd" class="cell" data-execution_count="10">
+<div id="eb51f737" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>california_regions <span class="op">=</span> [<span class="st">&quot;Los Angeles&quot;</span>, <span class="st">&quot;San Diego&quot;</span>, <span class="st">&quot;Sacramento&quot;</span>, <span class="st">&quot;San Francisco&quot;</span>]</span>
@@ -3035,7 +3035,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <ul>
 <li>Validate only 4 regions listed above are in the new Data Frame</li>
 </ul>
-<div id="fbccbd81" class="cell" data-execution_count="11">
+<div id="6a903e3a" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(avocado_ca[<span class="st">&#39;geography&#39;</span>].unique())</span>
@@ -3044,7 +3044,7 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <div class="cell-output cell-output-stdout">
 <pre><code>[&#39;Los Angeles&#39; &#39;Sacramento&#39; &#39;San Diego&#39; &#39;San Francisco&#39;]</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="1173">
+<div class="cell-output cell-output-display" data-execution_count="33">
 <div>
 
 
@@ -3175,12 +3175,12 @@ There are no missing values, and the dataset is ready for analysis after minor c
 <ul>
 <li>Validate we have both types of avocados (<code>organic</code> and <code>conventional</code>) for each region in CA</li>
 </ul>
-<div id="07697018" class="cell" data-execution_count="12">
+<div id="bb24a839" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>avocado_ca.groupby([<span class="st">&#39;geography&#39;</span>, <span class="st">&#39;type&#39;</span>])[<span class="st">&#39;total_volume&#39;</span>].count()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="1174">
+<div class="cell-output cell-output-display" data-execution_count="34">
 <pre><code>geography      type        
 Los Angeles    conventional    306
                organic         306
@@ -3199,7 +3199,7 @@ Name: total_volume, dtype: int64</code></pre>
 <h3 class="anchored" data-anchor-id="step-7">Step 7</h3>
 <section id="in-which-california-regions-is-the-price-of-organic-versus-conventional-avocados-most-different" class="level5">
 <h5 class="anchored" data-anchor-id="in-which-california-regions-is-the-price-of-organic-versus-conventional-avocados-most-different">In which California regions is the price of organic versus conventional avocados most different?</h5>
-<div id="e37b102d" class="cell" data-execution_count="13">
+<div id="99220f09" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>price_summary <span class="op">=</span> (</span>
@@ -3224,7 +3224,7 @@ Name: total_volume, dtype: int64</code></pre>
 </div>
 </div>
 <p>Now that we have a table showing the <code>avg_price</code> for each avocado <code>type</code>, lets find the region in CA with the biggest price difference between types.</p>
-<div id="8a19ce51" class="cell" data-execution_count="14">
+<div id="8d8a88d4" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>price_diff <span class="op">=</span> (</span>
@@ -3260,7 +3260,7 @@ max      0.718954
 Name: price_diff, dtype: float64</code></pre>
 </div>
 </div>
-<div id="3b22561b" class="cell" data-execution_count="15">
+<div id="23e53fe9" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>(</span>
@@ -3294,7 +3294,7 @@ Name: price_diff, dtype: float64</code></pre>
 </section>
 <section id="step-8-recreating-the-graph" class="level3">
 <h3 class="anchored" data-anchor-id="step-8-recreating-the-graph">Step 8: Recreating the graph</h3>
-<div id="ad19cd63" class="cell" data-execution_count="16">
+<div id="770832e7" class="cell" data-execution_count="16">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>cols <span class="op">=</span> [<span class="st">&#39;geography&#39;</span>, <span class="st">&#39;type&#39;</span>, <span class="st">&#39;small_bags&#39;</span>, <span class="st">&#39;large_bags&#39;</span>, <span class="st">&#39;xlarge_bags&#39;</span>]</span>
@@ -3364,7 +3364,7 @@ Name: price_diff, dtype: float64</code></pre>
 <section id="outside-data---final-part" class="level3">
 <h3 class="anchored" data-anchor-id="outside-data---final-part">Outside Data - Final Part</h3>
 <p>We are now going to upload a new dataset with housing price data from zillow, merge it with the avocado dataset, and create new plots showing the relationships between housing price and avocado sales.</p>
-<div id="afca5a73" class="cell" data-execution_count="17">
+<div id="e1b21bb0" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -3374,7 +3374,7 @@ Name: price_diff, dtype: float64</code></pre>
 </details>
 </div>
 <p>After uploading the data, we need to filter it so we only have data from the 4 major regions in CA we looked at previously</p>
-<div id="7a22b919" class="cell" data-execution_count="18">
+<div id="8819d7bb" class="cell" data-execution_count="18">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter for California metros of interest</span></span>
@@ -3409,7 +3409,7 @@ Filtered dataset (California metros):
 </div>
 </div>
 <p>After filtering, we need to merge this dataset with our orignial avocado dataset.</p>
-<div id="5d9dbce8" class="cell" data-execution_count="19">
+<div id="8eb0dacc" class="cell" data-execution_count="19">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Select only the 2015–2020 columns</span></span>
@@ -3474,7 +3474,7 @@ Merged dataset preview:
 </div>
 </div>
 <p>Before we plot the merged dataset, let’s see what the average house price in these 4 regions looks like over time.</p>
-<div id="0db3a698" class="cell" data-execution_count="20">
+<div id="5150c7d4" class="cell" data-execution_count="20">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>(</span>
@@ -3493,7 +3493,7 @@ Merged dataset preview:
 </div>
 </div>
 </div>
-<div id="ed3178f1" class="cell" data-execution_count="21">
+<div id="317d58ac" class="cell" data-execution_count="21">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Fix region naming to match Zillow data ---</span></span>
@@ -3532,7 +3532,7 @@ Merged dataset preview:
 </details>
 </div>
 <p>Now let’s plot the relationship between home and avocado prices in the 4 major regions of CA.</p>
-<div id="a10bf4b4" class="cell" data-execution_count="22">
+<div id="22b31bd4" class="cell" data-execution_count="22">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Plot the relationship ---</span></span>

@@ -1,0 +1,276 @@
+---
+title: "Lab 3: Singing A Song"
+format:
+  html:
+    embed-resources: true
+---
+### Repository Link  
+You can view the full project repository on [Github]
+#### This weeks assignment: Write functions that automatically sing the 12 Days of Christmas, a very repetitive song.  
+First we import the required dataset. (see code)
+```{python}
+#| echo: true
+#| code-fold: true
+import pandas as pd
+xmas = pd.read_csv("https://www.dropbox.com/scl/fi/qxaslqqp5p08i1650rpc4/xmas.csv?rlkey=erdxi7jbh7pqf9fh4lv4cayp5&dl=1")
+
+xmas.head()
+```  
+  
+##### Now, let's define our pluralize_gift function:
+```{python}
+#| echo: true
+#| code-fold: true
+def pluralize_gift(gift):
+  """
+  Returns plural of a noun
+  
+  Parameters
+  ----------
+  gift: str
+    A noun
+    
+  Return
+  ------
+  str
+    Plural version
+  """
+
+  if 'oo' in gift:
+    gift = gift.replace('oo', 'ee')
+  elif gift.endswith('y'):
+    gift = gift[:-1] + 'ies'
+  else:
+    gift = gift + 's'
+
+  return gift
+```
+
+
+##### After defining it, we need to check that it works properly.
+```{python}
+#| echo: true
+#| code-fold: true
+# Test single word (this should work)
+pluralize_gift("goose")
+
+# Will work if your function is vectorized! (our function is not vectorized)
+# pluralize_gift(xmas['Gift.Item'])
+
+# Apply to entire column (since our function isn’t vectorized)
+xmas['Gift.Plural'] = xmas['Gift.Item'].apply(pluralize_gift)
+
+# Check results
+xmas[['Gift.Item', 'Gift.Plural']].head()
+
+```
+
+##### Next, we create a dictionary to map the day numbers to words.
+```{python}
+#| echo: true
+#| code-fold: true
+# Create a dictionary mapping day numbers to words
+num_to_word = {
+    1: "one",
+    2: "two",
+    3: "three",
+    4: "four",
+    5: "five",
+    6: "six",
+    7: "seven",
+    8: "eight",
+    9: "nine",
+    10: "ten",
+    11: "eleven",
+    12: "twelve"
+}
+
+# Map numbers to their word form
+xmas['Day.Word'] = xmas['Day'].map(num_to_word)
+
+# Check that it worked
+xmas[['Day', 'Day.Word']].head()
+```
+
+##### Now we need to define our next function, the one that makes the proper phrase for each day.
+```{python}
+#| echo: true
+#| code-fold: true
+def make_phrase(num, num_word, item, verb, adjective, location):
+    """
+    Return the gift phrase for a given day in the 12 Days of Christmas.
+
+    Parameters
+    ----------
+    num : int
+        The day number (1-12)
+    num_word : str
+        The day number in words (e.g., "one", "two", "three")
+    item : str
+        The main gift item (e.g., "ring", "goose")
+    verb : str
+        The verb describing the gift (e.g., "a-laying")
+    adjective : str
+        An optional adjective (e.g., "french")
+    location : str
+        An optional location phrase (e.g., "in a pear tree")
+
+    Returns
+    -------
+    str
+        A full phrase (e.g., "five golden rings" or "a partridge in a pear tree")
+    """
+
+    ## Step 1: Replace NAs with blank strings
+    if pd.isna(verb):
+        verb = ""
+    if pd.isna(adjective):
+        adjective = ""
+    if pd.isna(location):
+        location = ""
+
+    ## Step 2: If the day number is larger than 1, pluralize the gift
+    if num > 1:
+        item = pluralize_gift(item)
+
+    ## Step 3: Figure out if a gift item starts with a vowel
+    vowels = ['a', 'e', 'i', 'o', 'u']
+    starts_w_vowel = item[0].lower() in vowels
+
+    ## Step 4: Handle grammar rules
+    if num == 1:
+        article = 'an' if starts_w_vowel else 'a'
+        phrase = f"{article} {adjective} {item} {location}".strip()
+    else:
+        phrase = f"{num_word} {adjective} {item} {verb} {location}".strip()
+
+    ## Step 5: Clean up extra spaces and return
+    return " ".join(phrase.split())
+
+```
+
+##### Here we tested to see if the above function created works.
+```{python}
+#| echo: true
+#| code-fold: true
+## testing make_phrase function
+print(make_phrase(1, "one", "partridge", "", "", "in a pear tree"))
+# a partridge in a pear tree
+
+print(make_phrase(5, "five", "ring", "", "golden", ""))
+# five golden rings
+
+print(make_phrase(10, "ten", "lord", "a-leaping", "", ""))
+# ten lords a-leaping
+```
+
+##### Seeing that our `make_phrase` function works, we create a new column in the dataset which contains the `Full.Phrase` for each day in the song. 
+```{python}
+#| echo: true
+#| code-fold: true
+xmas["Full.Phrase"] = xmas.apply(lambda row: make_phrase(
+    num = row["Day"],
+    num_word = row["Day.Word"],
+    item = row["Gift.Item"],
+    verb = row["Verb"],
+    adjective =row["Adjective"],
+    location = row["Location"],
+), axis = 1)
+xmas[['Day', 'Full.Phrase']].head(12)
+```
+
+##### I wanted to see how the song would look now with 1 iteration:
+```{python}
+#| echo: true
+#| code-fold: true
+for phrase in xmas['Full.Phrase']:
+    print(phrase)
+```
+
+
+##### Now we create the last function for this assignment, `sing_day`. This function sings only the part of the song for the specific day chosen. Part of this function is making sure the grammer output is correct.    
+##### You'll notice when printing the song at the end, every line except for the last in the verse ends in a comma; the last line in each verse ends with a period.
+```{python}
+#| echo: true
+#| code-fold: true
+def sing_day(dataset, num, phrase_col):
+    """
+    Returns the verse for a given day of 'The 12 Days of Christmas'.
+    
+    Parameters
+    ----------
+    dataset : pandas.DataFrame
+        The data containing all gifts and their phrases
+    num : int
+        The day number to sing (1–12)
+    phrase_col : str
+        The column name that contains the gift phrases (e.g., 'Full.Phrase')
+    
+    Returns
+    -------
+    str
+        The full verse for the specified day
+    """
+
+    # Step 1: Setup the intro line
+    day_word_map = {
+        1: "first",
+        2: "second",
+        3: "third",
+        4: "fourth",
+        5: "fifth",
+        6: "sixth",
+        7: "seventh",
+        8: "eighth",
+        9: "ninth",
+        10: "tenth",
+        11: "eleventh",
+        12: "twelfth"
+    }
+    
+    num_word = day_word_map[num]
+    intro = "On the " + num_word + " day of Christmas, my true love sent to me:"
+    
+    # Step 2: Build the gift lines
+    lines = []
+    # Loop backwards through the days (e.g., 2, then 1)
+    for i in range(num, 0, -1):
+        line = dataset.loc[dataset['Day'] == i, phrase_col].values[0]
+        
+        # Add “and” before the last gift if day > 1 and i == 1
+        if i == 1 and num > 1:
+            line = "and " + line 
+        lines.append(line)
+    # adding punctuation
+    for j in range(len(lines)):
+        if j < len(lines) - 1:
+            lines[j] = lines[j] + ","
+        else:
+            lines[j] = lines[j] + "."
+        
+        # combines all lines into a verse
+    gifts = "\n".join(lines)
+        
+    
+    # Step 3: Combine and return
+    return intro + "\n" + gifts
+
+```
+
+##### Here we test the `sing_day` function defined above, I decided to test for day 3:
+```{python}
+#| echo: true
+#| code-fold: true
+print(sing_day(xmas, 3, "Full.Phrase"))
+```
+
+
+#### Finally, we have our whole song:
+```{python}
+#| echo: true
+#| code-fold: true
+# Loop through all 12 days and sing the full song
+for day in range(12, 0, -1):
+    print(sing_day(xmas, day, "Full.Phrase"))
+    print()  # adds a blank line between verses
+```

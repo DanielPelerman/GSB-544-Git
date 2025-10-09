@@ -2202,9 +2202,10 @@ vertical-align: -.125em;
 
 <section id="repository-link" class="level3">
 <h3 class="anchored" data-anchor-id="repository-link">Repository Link</h3>
-<p>You can view the full project repository on [Github] #### This weeks assignment: Write functions that automatically sing the 12 Days of Christmas, a very repetitive song.<br>
+<p>You can view the full project repository on <a href="https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%203/Lab%203">Github</a><br>
+#### This weeks assignment: Write functions that automatically sing the 12 Days of Christmas, a very repetitive song.<br>
 First we import the required dataset. (see code)</p>
-<div id="7fd64642" class="cell" data-execution_count="1">
+<div id="73e75080" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -2212,7 +2213,7 @@ First we import the required dataset. (see code)</p>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>xmas.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="45">
+<div class="cell-output cell-output-display" data-execution_count="67">
 <div>
 
 
@@ -2282,7 +2283,7 @@ First we import the required dataset. (see code)</p>
 </div>
 <section id="now-lets-define-our-pluralize_gift-function" class="level5">
 <h5 class="anchored" data-anchor-id="now-lets-define-our-pluralize_gift-function">Now, let’s define our pluralize_gift function:</h5>
-<div id="85f8e08f" class="cell" data-execution_count="2">
+<div id="a06fe617" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pluralize_gift(gift):</span>
@@ -2313,7 +2314,7 @@ First we import the required dataset. (see code)</p>
 </section>
 <section id="after-defining-it-we-need-to-check-that-it-works-properly." class="level5">
 <h5 class="anchored" data-anchor-id="after-defining-it-we-need-to-check-that-it-works-properly.">After defining it, we need to check that it works properly.</h5>
-<div id="e0f8d341" class="cell" data-execution_count="3">
+<div id="fdbb32ff" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Test single word (this should work)</span></span>
@@ -2328,7 +2329,7 @@ First we import the required dataset. (see code)</p>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Check results</span></span>
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>xmas[[<span class="st">&#39;Gift.Item&#39;</span>, <span class="st">&#39;Gift.Plural&#39;</span>]].head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="47">
+<div class="cell-output cell-output-display" data-execution_count="69">
 <div>
 
 
@@ -2375,7 +2376,7 @@ First we import the required dataset. (see code)</p>
 </section>
 <section id="next-we-create-a-dictionary-to-map-the-day-numbers-to-words." class="level5">
 <h5 class="anchored" data-anchor-id="next-we-create-a-dictionary-to-map-the-day-numbers-to-words.">Next, we create a dictionary to map the day numbers to words.</h5>
-<div id="fb2e05f0" class="cell" data-execution_count="4">
+<div id="912f5dbc" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a dictionary mapping day numbers to words</span></span>
@@ -2400,7 +2401,7 @@ First we import the required dataset. (see code)</p>
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that it worked</span></span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>xmas[[<span class="st">&#39;Day&#39;</span>, <span class="st">&#39;Day.Word&#39;</span>]].head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="48">
+<div class="cell-output cell-output-display" data-execution_count="70">
 <div>
 
 
@@ -2447,7 +2448,7 @@ First we import the required dataset. (see code)</p>
 </section>
 <section id="now-we-need-to-define-our-next-function-the-one-that-makes-the-proper-phrase-for-each-day." class="level5">
 <h5 class="anchored" data-anchor-id="now-we-need-to-define-our-next-function-the-one-that-makes-the-proper-phrase-for-each-day.">Now we need to define our next function, the one that makes the proper phrase for each day.</h5>
-<div id="88d25278" class="cell" data-execution_count="5">
+<div id="87c60fb4" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_phrase(num, num_word, item, verb, adjective, location):</span>
@@ -2505,7 +2506,7 @@ First we import the required dataset. (see code)</p>
 </section>
 <section id="here-we-tested-to-see-if-the-above-function-created-works." class="level5">
 <h5 class="anchored" data-anchor-id="here-we-tested-to-see-if-the-above-function-created-works.">Here we tested to see if the above function created works.</h5>
-<div id="3616a70f" class="cell" data-execution_count="6">
+<div id="288fe706" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">## testing make_phrase function</span></span>
@@ -2527,7 +2528,7 @@ ten lords a-leaping</code></pre>
 </section>
 <section id="seeing-that-our-make_phrase-function-works-we-create-a-new-column-in-the-dataset-which-contains-the-full.phrase-for-each-day-in-the-song." class="level5">
 <h5 class="anchored" data-anchor-id="seeing-that-our-make_phrase-function-works-we-create-a-new-column-in-the-dataset-which-contains-the-full.phrase-for-each-day-in-the-song.">Seeing that our <code>make_phrase</code> function works, we create a new column in the dataset which contains the <code>Full.Phrase</code> for each day in the song.</h5>
-<div id="0856d7f8" class="cell" data-execution_count="7">
+<div id="3b8bc82c" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>xmas[<span class="st">&quot;Full.Phrase&quot;</span>] <span class="op">=</span> xmas.<span class="bu">apply</span>(<span class="kw">lambda</span> row: make_phrase(</span>
@@ -2540,7 +2541,7 @@ ten lords a-leaping</code></pre>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>), axis <span class="op">=</span> <span class="dv">1</span>)</span>
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>xmas[[<span class="st">&#39;Day&#39;</span>, <span class="st">&#39;Full.Phrase&#39;</span>]].head(<span class="dv">12</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="51">
+<div class="cell-output cell-output-display" data-execution_count="73">
 <div>
 
 
@@ -2622,7 +2623,7 @@ ten lords a-leaping</code></pre>
 </section>
 <section id="i-wanted-to-see-how-the-song-would-look-now-with-1-iteration" class="level5">
 <h5 class="anchored" data-anchor-id="i-wanted-to-see-how-the-song-would-look-now-with-1-iteration">I wanted to see how the song would look now with 1 iteration:</h5>
-<div id="0949984a" class="cell" data-execution_count="8">
+<div id="bd3f98a6" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> phrase <span class="kw">in</span> xmas[<span class="st">&#39;Full.Phrase&#39;</span>]:</span>
@@ -2649,7 +2650,7 @@ twelve drummers drumming</code></pre>
 </section>
 <section id="youll-notice-when-printing-the-song-at-the-end-every-line-except-for-the-last-in-the-verse-ends-in-a-comma-the-last-line-in-each-verse-ends-with-a-period." class="level5">
 <h5 class="anchored" data-anchor-id="youll-notice-when-printing-the-song-at-the-end-every-line-except-for-the-last-in-the-verse-ends-in-a-comma-the-last-line-in-each-verse-ends-with-a-period.">You’ll notice when printing the song at the end, every line except for the last in the verse ends in a comma; the last line in each verse ends with a period.</h5>
-<div id="ccbd3561" class="cell" data-execution_count="9">
+<div id="ec00add3" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sing_day(dataset, num, phrase_col):</span>
@@ -2718,7 +2719,7 @@ twelve drummers drumming</code></pre>
 </section>
 <section id="here-we-test-the-sing_day-function-defined-above-i-decided-to-test-for-day-3" class="level5">
 <h5 class="anchored" data-anchor-id="here-we-test-the-sing_day-function-defined-above-i-decided-to-test-for-day-3">Here we test the <code>sing_day</code> function defined above, I decided to test for day 3:</h5>
-<div id="394f7bfb" class="cell" data-execution_count="10">
+<div id="1d2b1706" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sing_day(xmas, <span class="dv">3</span>, <span class="st">&quot;Full.Phrase&quot;</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -2733,7 +2734,7 @@ and a partridge in a pear tree.</code></pre>
 </section>
 <section id="finally-we-have-our-whole-song" class="level4">
 <h4 class="anchored" data-anchor-id="finally-we-have-our-whole-song">Finally, we have our whole song:</h4>
-<div id="ed474b31" class="cell" data-execution_count="11">
+<div id="9e9958e4" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Loop through all 12 days and sing the full song</span></span>

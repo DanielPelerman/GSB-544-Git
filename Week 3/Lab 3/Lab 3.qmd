@@ -5,7 +5,7 @@ format:
     embed-resources: true
 ---
 ### Repository Link  
-You can view the full project repository on [Github]
+You can view the full project repository on [Github](https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%203/Lab%203)  
 #### This weeks assignment: Write functions that automatically sing the 12 Days of Christmas, a very repetitive song.  
 First we import the required dataset. (see code)
 ```{python}

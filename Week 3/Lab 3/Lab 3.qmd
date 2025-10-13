@@ -6,6 +6,7 @@ format:
 ---
 ### Repository Link  
 You can view the full project repository on [Github](https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%203/Lab%203)  
+
 #### This weeks assignment: Write functions that automatically sing the 12 Days of Christmas, a very repetitive song.  
 First we import the required dataset. (see code)
 ```{python}
@@ -14,7 +15,7 @@ First we import the required dataset. (see code)
 import pandas as pd
 xmas = pd.read_csv("https://www.dropbox.com/scl/fi/qxaslqqp5p08i1650rpc4/xmas.csv?rlkey=erdxi7jbh7pqf9fh4lv4cayp5&dl=1")
 
-xmas.head()
+print(xmas.head())
 ```  
   
 ##### Now, let's define our pluralize_gift function:
@@ -61,7 +62,7 @@ pluralize_gift("goose")
 xmas['Gift.Plural'] = xmas['Gift.Item'].apply(pluralize_gift)
 
 # Check results
-xmas[['Gift.Item', 'Gift.Plural']].head()
+print(xmas[['Gift.Item', 'Gift.Plural']].head())
 
 ```
 
@@ -89,7 +90,7 @@ num_to_word = {
 xmas['Day.Word'] = xmas['Day'].map(num_to_word)
 
 # Check that it worked
-xmas[['Day', 'Day.Word']].head()
+print(xmas[['Day', 'Day.Word']].head())
 ```
 
 ##### Now we need to define our next function, the one that makes the proper phrase for each day.
@@ -176,16 +177,10 @@ xmas["Full.Phrase"] = xmas.apply(lambda row: make_phrase(
     adjective =row["Adjective"],
     location = row["Location"],
 ), axis = 1)
-xmas[['Day', 'Full.Phrase']].head(12)
+print(xmas[['Day', 'Full.Phrase']].head(12))
 ```
 
-##### I wanted to see how the song would look now with 1 iteration:
-```{python}
-#| echo: true
-#| code-fold: true
-for phrase in xmas['Full.Phrase']:
-    print(phrase)
-```
+
 
 
 ##### Now we create the last function for this assignment, `sing_day`. This function sings only the part of the song for the specific day chosen. Part of this function is making sure the grammer output is correct.    
@@ -273,4 +268,35 @@ print(sing_day(xmas, 3, "Full.Phrase"))
 for day in range(12, 0, -1):
     print(sing_day(xmas, day, "Full.Phrase"))
     print()  # adds a blank line between verses
+```
+
+Here we make sure the `sing_line` function as described in the directions.
+```{python}
+#| echo: true
+#| code-fold: true
+sing_line = sing_day
+sing_line(xmas, num = 2, phrase_col = "Full.Phrase")
+```
+
+Now we make sure our functions work with the new dataset, `xmas2`
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+# Load the new dataset
+xmas2 = pd.read_csv("https://www.dropbox.com/scl/fi/p9x9k8xwuzs9rhp582vfy/xmas_2.csv?rlkey=kvc3j3lmyn4opcidsrhcmrof1&dl=1")
+
+xmas2['Full.Phrase'] = xmas2.apply(lambda row: make_phrase(
+    num=row['Day'],
+    num_word=row['Day.in.Words'],  # ✅ updated column name
+    item=row['Gift.Item'],
+    verb=row['Verb'],
+    adjective=row['Adjective'],
+    location=row['Location']
+), axis=1)
+for day in range(12, 0, -1):
+    print(sing_day(xmas2, day, "Full.Phrase"))
+    print()
+
 ```

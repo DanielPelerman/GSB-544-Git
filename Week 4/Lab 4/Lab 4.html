@@ -2200,9 +2200,13 @@ vertical-align: -.125em;
 </header>
 
 
+<section id="repository-link" class="level3">
+<h3 class="anchored" data-anchor-id="repository-link">Repository Link</h3>
+<p>You can view the full project repository on <a href="https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%204/Lab%204">Github</a></p>
+</section>
 <section id="part-1-scrape-data-from-an-unstructured-website" class="level3">
 <h3 class="anchored" data-anchor-id="part-1-scrape-data-from-an-unstructured-website">Part 1: Scrape data from an Unstructured Website</h3>
-<div id="58863adb" class="cell" data-execution_count="1">
+<div id="19e007f1" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
@@ -2216,7 +2220,7 @@ vertical-align: -.125em;
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>soup <span class="op">=</span> BeautifulSoup(response.content, <span class="st">&quot;html.parser&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="80197552" class="cell" data-execution_count="2">
+<div id="ef4dd3b5" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Status code:&quot;</span>, response.status_code)</span>
@@ -2228,7 +2232,7 @@ Page title: Meal Plan (210) | - Tastes Better From Scratch</code></pre>
 </div>
 </div>
 <p>This confirms that the HTTP request to the Tastes Better From Scratch website succeeded. The page title also verifies that we successfully accessed the correct meal-plan page (Meal Plan 210).</p>
-<div id="5f92b0ab" class="cell" data-execution_count="3">
+<div id="fdb4607a" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Preview the first 20 links on the page</span></span>
@@ -2259,7 +2263,7 @@ https://tastesbetterfromscratch.com/category/vegetarian/</code></pre>
 </div>
 </div>
 <p>The filtered list above shows only the links that match our selection criteria for meal-plan recipes. We limited the scraping to those pages containing individual recipe information, excluding category or navigation links.</p>
-<div id="880be9c2" class="cell" data-execution_count="4">
+<div id="6064c290" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>filtered_links <span class="op">=</span> []</span>
@@ -2278,7 +2282,7 @@ https://tastesbetterfromscratch.com/category/vegetarian/</code></pre>
 </div>
 </div>
 <p>This output confirms that our filtering logic correctly narrowed the scraped URLs down to recipe-related pages. Each link points to a specific recipe collection, which will later be parsed to extract the individual meal titles and links.</p>
-<div id="63708b69" class="cell" data-execution_count="5">
+<div id="1c3ef539" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>filtered_links <span class="op">=</span> []</span>
@@ -2342,7 +2346,7 @@ https://tastesbetterfromscratch.com/category/vegetarian/</code></pre>
 </div>
 </div>
 <p>After running the scraping and filtering functions, we identified 16 unique recipe entries in the selected meal plan. Each row in the resulting DataFrame includes the recipe name and the corresponding link to its full recipe page. This dataset will serve as the foundation for the next stages — merging price data, adding nutritional information from the Tasty API, and analyzing meal characteristics.</p>
-<div id="724b17cc" class="cell" data-execution_count="6">
+<div id="d1e3951f" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add the extra columns to match the lab instructions</span></span>
@@ -2385,7 +2389,7 @@ https://tastesbetterfromscratch.com/category/vegetarian/</code></pre>
 </section>
 <section id="part-2-data-from-api" class="level3">
 <h3 class="anchored" data-anchor-id="part-2-data-from-api">Part 2: Data from API</h3>
-<div id="b2acba4b" class="cell" data-execution_count="7">
+<div id="40746961" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>monday_recipe <span class="op">=</span> df[<span class="st">&quot;Name of Recipe&quot;</span>].iloc[<span class="dv">0</span>]</span>
@@ -2396,7 +2400,7 @@ https://tastesbetterfromscratch.com/category/vegetarian/</code></pre>
 </div>
 </div>
 <p>To test the API connection, we began by selecting the Monday recipe (“Biscuit Chicken Pot Pie”) as our sample query. This lets us verify that the API correctly returns related recipes before scaling the process to all meals in the plan.</p>
-<div id="6d2740a7" class="cell" data-execution_count="8">
+<div id="e01f9e85" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
@@ -2425,7 +2429,7 @@ https://tastesbetterfromscratch.com/category/vegetarian/</code></pre>
 </div>
 </div>
 <p>The status code 200 confirms that the API request was successful and that data was returned by the Tasty endpoint. This means our connection, headers, and query parameters are all working properly.</p>
-<div id="ae46e6a7" class="cell" data-execution_count="9">
+<div id="be05fb96" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> response.json()</span>
@@ -2443,7 +2447,7 @@ Number of results returned: 7</code></pre>
 <h4 class="anchored" data-anchor-id="tasty-api-recipe-results">Tasty API Recipe Results</h4>
 <p>The table below lists the top recipes returned from the Tasty API based on the meal plan’s Monday recipe.<br>
 Each entry includes the recipe’s name, calorie estimate, and a link to the full recipe or video.</p>
-<div id="d698d076" class="cell" data-execution_count="10">
+<div id="65c9a425" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert the JSON results into a DataFrame</span></span>
@@ -2519,7 +2523,7 @@ Each entry includes the recipe’s name, calorie estimate, and a link to the ful
 </table>
 </div>
 </div>
-<div id="a598530b" class="cell" data-execution_count="11">
+<div id="08b195d3" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fuzzywuzzy <span class="im">import</span> process</span>
@@ -2772,7 +2776,7 @@ Each entry includes the recipe’s name, calorie estimate, and a link to the ful
 </section>
 <section id="part-3-automation" class="level3">
 <h3 class="anchored" data-anchor-id="part-3-automation">Part 3: Automation</h3>
-<div id="68f5617c" class="cell" data-execution_count="12">
+<div id="4503cafb" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
@@ -2934,7 +2938,7 @@ Each entry includes the recipe’s name, calorie estimate, and a link to the ful
 <span id="cb21-157"><a href="#cb21-157" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df_matched</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="3479f327" class="cell" data-execution_count="13">
+<div id="10b2c43e" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> get_mealplan_data(<span class="dv">202</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
@@ -2990,7 +2994,7 @@ The output table displays the matched data for each recipe. Each row shows the o
 </section>
 <section id="part-4-adding-a-vegetarian-column" class="level3">
 <h3 class="anchored" data-anchor-id="part-4-adding-a-vegetarian-column">Part 4: Adding a <code>Vegetarian</code> column</h3>
-<div id="6df6da46" class="cell" data-execution_count="14">
+<div id="b92f81ca" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fuzzywuzzy <span class="im">import</span> fuzz</span>
@@ -3084,7 +3088,7 @@ The output table displays the matched data for each recipe. Each row shows the o
 </section>
 <section id="part-5-creating-a-visualization" class="level3">
 <h3 class="anchored" data-anchor-id="part-5-creating-a-visualization">Part 5: Creating a Visualization</h3>
-<div id="b28d24e8" class="cell" data-execution_count="15">
+<div id="77ab3eef" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot, aes, geom_col, labs, theme_minimal, scale_fill_manual, theme, element_text</span>

@@ -5,6 +5,9 @@ format:
     embed-resources: true
 ---
 
+### Repository Link  
+You can view the full project repository on [Github](https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%204/Lab%204)  
+
 ### Part 1: Scrape data from an Unstructured Website
 ```{python}
 #| echo: true

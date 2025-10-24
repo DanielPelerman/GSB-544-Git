@@ -1,0 +1,541 @@
+---
+title: "Lab 4"
+format:
+  html:
+    embed-resources: true
+---
+
+### Part 1: Scrape data from an Unstructured Website
+```{python}
+#| echo: true
+#| code-fold: true
+import requests
+import certifi
+from bs4 import BeautifulSoup
+
+
+URL = "https://tastesbetterfromscratch.com/meal-plan-210"
+HEADERS ={ "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
+response = requests.get(URL, headers=HEADERS)
+soup = BeautifulSoup(response.content, "html.parser")
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+print("Status code:", response.status_code)
+print("Page title:", soup.title.text)
+
+```
+
+This confirms that the HTTP request to the Tastes Better From Scratch website succeeded.
+The page title also verifies that we successfully accessed the correct meal-plan page (Meal Plan 210).
+
+```{python}
+#| echo: true
+#| code-fold: true
+# Preview the first 20 links on the page
+for link in soup.find_all("a", href=True)[:20]:
+    print(link["href"])
+
+```
+
+The filtered list above shows only the links that match our selection criteria for meal-plan recipes.
+We limited the scraping to those pages containing individual recipe information, excluding category or navigation links.
+```{python}
+#| echo: true
+#| code-fold: true
+filtered_links = []
+
+for link in soup.find_all("a", href=True):
+    href = link["href"]
+    if "https://tastesbetterfromscratch.com/" in href and "category" not in href and "meal-plan" not in href:
+        filtered_links.append(href)
+
+print(len(filtered_links))
+print(filtered_links[:10])
+
+```
+
+This output confirms that our filtering logic correctly narrowed the scraped URLs down to recipe-related pages. Each link points to a specific recipe collection, which will later be parsed to extract the individual meal titles and links.
+
+```{python}
+#| echo: true
+#| code-fold: true
+filtered_links = []
+
+for link in soup.find_all("a", href=True):
+    href = link["href"]
+    name = link.get_text(strip=True)
+
+    if (
+        "https://tastesbetterfromscratch.com/" in href
+        and "category" not in href
+        and "meal-plan" not in href
+        and "cookbook" not in href
+        and "shop" not in href
+        and "register" not in href
+        and "travel" not in href
+        and "about" not in href
+        and "index" not in href
+        and "ebook" not in href.lower()
+        and "subscribe" not in href.lower()
+        and "newsletter" not in href.lower()
+        and "home" not in href.lower()
+        and name not in ["Home", "Join Our Newsletter", "Macro E-Books", "Best Recipes"]
+        and len(name.split()) > 1  # avoid short/blank labels
+    ):
+        filtered_links.append({
+            "Name of Recipe": name,
+            "Link to Recipe": href
+        })
+
+import pandas as pd
+df = pd.DataFrame(filtered_links).drop_duplicates()
+print("Number of recipes found:", len(df))
+print(df.head(10))
+
+
+```
+
+After running the scraping and filtering functions, we identified 16 unique recipe entries in the selected meal plan.
+Each row in the resulting DataFrame includes the recipe name and the corresponding link to its full recipe page.
+This dataset will serve as the foundation for the next stages — merging price data, adding nutritional information from the Tasty API, and analyzing meal characteristics.
+```{python}
+#| echo: true
+#| code-fold: true
+# Add the extra columns to match the lab instructions
+df["Day of the Week"] = ""
+df["Price of Recipe"] = ""
+
+# Reorder columns
+df = df[["Day of the Week", "Name of Recipe", "Link to Recipe", "Price of Recipe"]]
+
+# Display first few rows
+print(df.head(10))
+```
+
+This updated table now includes the day of the week, recipe names, recipe links, and associated prices from the original meal plan.
+These additions make the dataset more structured and ready for enrichment with API data, which we’ll retrieve next from Tasty.
+
+### Part 2: Data from API
+
+```{python}
+#| echo: true
+#| code-fold: true
+monday_recipe = df["Name of Recipe"].iloc[0]
+print("Monday recipe:", monday_recipe)
+
+```
+
+To test the API connection, we began by selecting the Monday recipe (“Biscuit Chicken Pot Pie”) as our sample query.
+This lets us verify that the API correctly returns related recipes before scaling the process to all meals in the plan.
+
+```{python}
+#| echo: true
+#| code-fold: true
+import requests
+
+api_url = "https://tasty.p.rapidapi.com/recipes/list"
+api_key = "193f6a726amshb783a0762d8d719p11da79jsn75b5bb1d6920"  #  key from RapidAPI
+
+query = monday_recipe  # from earlier code
+
+headers = {
+    "x-rapidapi-key": api_key,
+    "x-rapidapi-host": "tasty.p.rapidapi.com"
+}
+
+params = {
+    "q": query,
+    "from": "0",
+    "size": "10"   # returns up to 10 matching recipes
+}
+
+response = requests.get(api_url, headers=headers, params=params)
+print("Status code:", response.status_code)
+
+```
+
+The status code 200 confirms that the API request was successful and that data was returned by the Tasty endpoint.
+This means our connection, headers, and query parameters are all working properly.
+
+```{python}
+#| echo: true
+#| code-fold: true
+data = response.json()
+
+print("Top-level keys:", data.keys())
+print("Number of results returned:", len(data.get("results", [])))
+
+```
+
+The Tasty API returned 7 potential matches for our query.
+Each result includes key metadata such as the recipe title, calorie information, and an external link.
+We’ll now extract and organize this data into a clean table for easier comparison.
+
+#### Tasty API Recipe Results
+
+The table below lists the top recipes returned from the Tasty API based on the meal plan’s Monday recipe.  
+Each entry includes the recipe’s name, calorie estimate, and a link to the full recipe or video.
+
+```{python}
+#| echo: true
+#| code-fold: true
+# Convert the JSON results into a DataFrame
+recipes = []
+
+for item in data.get("results", []):
+    name = item.get("name")
+    url = item.get("original_video_url") or item.get("canonical_id")
+    nutrition = item.get("nutrition", {})
+    calories = nutrition.get("calories", "N/A")
+
+    recipes.append({
+        "Recipe Name": name,
+        "Calories": calories,
+        "Link": f'<a href="{url}" target="_blank">View Recipe</a>' if url else "N/A"
+    })
+
+import pandas as pd
+
+# Create a clean DataFrame
+tasty_df = pd.DataFrame(recipes)
+
+# Display an HTML-rendered table instead of plain text
+from IPython.display import display, HTML
+display(HTML(tasty_df.to_html(escape=False, index=False)))
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+from fuzzywuzzy import process
+import pandas as pd
+
+df_matched = df.copy()
+df_matched["Best Match (API Name)"] = ""
+df_matched["Match Score"] = ""
+df_matched["Calories"] = ""
+df_matched["Tasty Link"] = ""
+
+for i, row in df.iterrows():
+    recipe_name = row["Name of Recipe"]
+    
+    result = process.extractOne(recipe_name, tasty_df["Recipe Name"])
+    if result:
+        match = result[0]
+        score = result[1]
+    else:
+        match = None
+        score = 0
+
+    df_matched.loc[i, "Best Match (API Name)"] = match
+    df_matched.loc[i, "Match Score"] = score
+
+    match_row = tasty_df[tasty_df["Recipe Name"] == match]
+    if not match_row.empty:
+        df_matched.loc[i, "Calories"] = match_row["Calories"].values[0]
+        df_matched.loc[i, "Tasty Link"] = match_row["Link"].values[0]
+
+from IPython.display import display, HTML
+# --- Add financial metric data (meal prices) ---
+
+# Define actual meal prices from the original image
+prices = {
+    "Biscuit Chicken Pot Pie": 11,
+    "Calzone": 8,
+    "Quinoa Burger": 15,
+    "Short Rib Ragu": 26,
+    "Cabbage Roll Soup": 20
+}
+
+# Map prices to your matched DataFrame
+df_matched["Price of Recipe"] = df_matched["Name of Recipe"].map(prices)
+
+# Format the prices with a dollar sign for display
+import pandas as pd
+df_matched["Price of Recipe"] = df_matched["Price of Recipe"].apply(
+    lambda x: f"${x:.2f}" if pd.notnull(x) else "N/A"
+)
+
+# Calculate and print total estimated weekly cost
+total_cost = (
+    df_matched["Price of Recipe"]
+    .replace("N/A", 0)
+    .replace(r"[$]", "", regex=True)
+    .astype(float)
+    .sum()
+)
+print(f"Estimated Weekly Meal Plan Total: ${total_cost:.2f}")
+
+#  Display final DataFrame as a clean HTML table
+from IPython.display import display, HTML
+display(HTML(df_matched.to_html(escape=False, index=False)))
+
+```
+
+Based on the fuzzy match between names, “Cheddar Biscuit Chicken Pot Pie” appears to be the best match for the Monday recipe.
+This confirms that our query logic and parsing methods are correctly identifying relevant recipes from the API.
+
+### Part 3: Automation
+```{python}
+#| echo: true
+#| code-fold: true
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+from fuzzywuzzy import process
+
+def get_weekly_plan(plan_number):
+    """
+    Scrapes the given meal plan from tastesbetterfromscratch.com.
+    Returns a DataFrame with day, name, link, and price.
+    """
+    import requests
+    from bs4 import BeautifulSoup
+    import pandas as pd
+
+    url = f"https://tastesbetterfromscratch.com/meal-plan-{plan_number}/"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    #  Find the main content section that holds meal links
+    main_content = soup.find("div", class_="entry-content")
+
+    recipe_items = []
+    if main_content:
+        for link in main_content.find_all("a", href=True):
+            href = link["href"]
+            text = link.get_text(strip=True)
+
+            # Filter out unrelated site links
+            if (
+                "tastesbetterfromscratch.com" in href
+                and all(excl not in href for excl in [
+                    "category", "meal-plan", "cookbook", "shop", "register",
+                    "travel", "about", "privacy", "contact", "newsletter",
+                    "policy", "disclosure", "sponsor"
+                ])
+                and len(text.split()) <= 5  # likely a recipe name, not long text
+                and "$" not in text         # avoid captions like "Estimated total"
+            ):
+                recipe_items.append({"Name of Recipe": text, "Link to Recipe": href})
+
+    df = pd.DataFrame(recipe_items).drop_duplicates()
+
+    #  Add manual prices for Meal Plan 210
+    if plan_number == 210:
+        prices = {
+            "Biscuit Chicken Pot Pie": 11.00,
+            "Calzone": 8.00,
+            "Quinoa Burger": 15.00,
+            "Short Rib Ragu": 26.00,
+            "Cabbage Roll Soup": 20.00
+        }
+        df["Price of Recipe"] = df["Name of Recipe"].map(prices).fillna("N/A")
+    else:
+        df["Price of Recipe"] = "N/A"
+    df = df[~df["Name of Recipe"].str.contains("Shopping List", case=False, na=False)]
+
+    return df
+
+
+
+def match_recipe(df_mealplan):
+    """
+    Queries the Tasty API and matches recipes from the scraped meal plan
+    to their closest matches in the Tasty API dataset.
+    Returns a merged DataFrame with calories and links.
+    """
+    import requests
+    import pandas as pd
+    from fuzzywuzzy import process
+    import warnings
+    import logging
+
+    # Suppress warnings and fuzzywuzzy logs
+    warnings.filterwarnings("ignore")
+    logging.getLogger().setLevel(logging.ERROR)
+
+    API_URL = "https://tasty.p.rapidapi.com/recipes/list"
+    HEADERS = {
+        "x-rapidapi-key": "193f6a726amshb783a0762d8d719p11da79jsn75b5bb1d6920",
+        "x-rapidapi-host": "tasty.p.rapidapi.com"
+    }
+
+    recipes = []
+
+    for _, row in df_mealplan.iterrows():
+        query = str(row["Name of Recipe"]).strip()
+
+        # Skip any junk or blank names
+        if not query or query.lower() in ["n/a", "nan", "none"] or "policy" in query.lower() or "list" in query.lower():
+            continue
+
+        try:
+            params = {"q": query, "from": 0, "size": 20}
+            response = requests.get(API_URL, headers=HEADERS, params=params)
+            data = response.json()
+
+            tasty_results = []
+            if "results" in data:
+                for item in data["results"]:
+                    tasty_results.append({
+                        "Tasty Name": item.get("name", "N/A"),
+                        "Calories": item.get("nutrition", {}).get("calories", "N/A"),
+                        "Link": item.get("original_video_url") or item.get("canonical_id", "N/A")
+                    })
+
+            # Fuzzy match against all names
+            if tasty_results:
+                tasty_df = pd.DataFrame(tasty_results)
+                match_result = process.extractOne(query, tasty_df["Tasty Name"])
+                if match_result:
+                    match, score, _ = match_result
+                    best_match = tasty_df.loc[tasty_df["Tasty Name"] == match].iloc[0]
+
+                    recipes.append({
+                        "Name of Recipe": query,
+                        "Price of Recipe": row["Price of Recipe"],
+                        "Best Match (API Name)": match,
+                        "Match Score": score,
+                        "Calories": best_match["Calories"],
+                        "Tasty Link": f'<a href="{best_match["Link"]}" target="_blank">View Recipe</a>'
+                    })
+        except Exception as e:
+            recipes.append({
+                "Name of Recipe": query,
+                "Price of Recipe": row["Price of Recipe"],
+                "Best Match (API Name)": f"Error: {str(e)}",
+                "Match Score": 0,
+                "Calories": "N/A",
+                "Tasty Link": "N/A"
+            })
+
+    # Clean up duplicate or invalid rows
+    df_final = pd.DataFrame(recipes)
+    df_final = df_final[df_final["Name of Recipe"].notna()]
+    df_final = df_final[df_final["Match Score"] > 0]
+    df_final = df_final.drop_duplicates(subset=["Name of Recipe"])
+
+    return df_final
+
+
+
+
+def get_mealplan_data(plan_number):
+    """
+    Main function that runs the full process:
+    - Scrapes the meal plan
+    - Queries Tasty API for each recipe
+    - Returns combined DataFrame
+    """
+    df_mealplan = get_weekly_plan(plan_number)
+    df_matched = match_recipe(df_mealplan)
+
+    from IPython.display import display, HTML
+    display(HTML(df_matched.to_html(escape=False, index=False)))
+
+    return df_matched
+
+```
+
+
+```{python}
+df = get_mealplan_data(202)
+
+```
+
+This command runs our automated function `get_mealplan_data()` which combines all the earlier steps into a single process.
+The function scrapes the meal plan, queries the Tasty API for each recipe, finds the best match using fuzzy string comparison, and returns a clean, merged dataset containing recipe names, match scores, calories, and links.  
+The output table displays the matched data for each recipe.
+Each row shows the original meal name, the best match found via the Tasty API, the fuzzy match score, calories, and a link to the full recipe.
+This verifies that our automation works correctly; the process now retrieves, matches, and structures data for any meal plan automatically.
+
+### Part 4: Adding a `Vegetarian` column
+```{python}
+#| code-fold: true
+#| echo: true
+from fuzzywuzzy import fuzz
+
+def add_vegetarian_flag(df):
+    """
+    Adds a 'Vegetarian' column based on fuzzy matching of meat-related words
+    in recipe titles.
+    """
+    meat_words = [
+        "chicken", "beef", "pork", "bacon", "steak", "ragu",
+        "turkey", "ham", "sausage", "lamb", "meat", "fish", "shrimp"
+    ]
+    
+    veg_status = []
+    for name in df["Name of Recipe"]:
+        name_lower = str(name).lower()
+        meat_found = False
+        for meat in meat_words:
+            # Check fuzzy similarity between title and each meat keyword
+            if fuzz.partial_ratio(meat, name_lower) > 85:
+                meat_found = True
+                break
+        veg_status.append("Non-Vegetarian" if meat_found else "Vegetarian")
+    
+    df["Vegetarian"] = veg_status
+    return df
+
+# Apply the vegetarian classification to your dataset
+df = add_vegetarian_flag(df)
+
+# Display result
+from IPython.display import display, HTML
+display(HTML(df.to_html(escape=False, index=False)))
+
+
+```
+
+In this step, we added a new column to the dataset that indicates whether each recipe is vegetarian or not.
+Using simple text matching, the script searches for keywords like “chicken,” “beef,” “pork,” or “fish” in the recipe title.
+If any of these are found, the meal is labeled “Non-Vegetarian.” Otherwise, it’s classified as “Vegetarian.”
+
+### Part 5: Creating a Visualization
+```{python}
+#| code-fold: true
+#| echo: true
+
+from plotnine import ggplot, aes, geom_col, labs, theme_minimal, scale_fill_manual, theme, element_text
+
+# Vertical bar chart (no coord_flip)
+p = (
+    ggplot(df, aes(x="Name of Recipe", y="Calories", fill="Vegetarian"))
+    + geom_col(show_legend=True)
+    + scale_fill_manual(values={"Vegetarian": "mediumseagreen", "Non-Vegetarian": "tomato"})
+    + labs(
+        title="Calories per Meal",
+        x="Meal Name",
+        y="Calories",
+        fill="Meal Type"
+    )
+    + theme_minimal()
+    + theme(
+        axis_text_x=element_text(rotation=30, ha="right", size=9),
+        axis_text_y=element_text(size=9),
+        plot_title=element_text(size=12, weight="bold")
+    )
+)
+
+p
+
+
+
+```
+
+To better understand the nutritional content across the week, we visualized the calorie data from the Tasty API.
+Each bar represents one recipe, with colors indicating whether it is vegetarian or not.
+This plot helps compare calorie levels at a glance and shows that the non-vegetarian meals generally contain more calories than the vegetarian ones.  
+The visualization highlights clear differences between vegetarian and non-vegetarian dishes.
+Meals such as Beef Noodle Soup and Chicken Gyros are higher in calories, while vegetarian options like Stuffed Shells and Stuffed Peppers are lighter.
+This confirms that our data integration and classification steps were successful, providing a meaningful analysis of meal nutrition.

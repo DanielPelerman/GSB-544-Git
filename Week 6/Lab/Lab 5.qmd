@@ -1,0 +1,574 @@
+---
+title: "Lab 5"
+format:
+  html:
+    embed-resources: true
+---
+
+### Repository Link 
+You can view the full project repository on [Github](link)
+
+### Part 1: Data Exploration  
+First let's preview the data:  
+```{python}
+#| echo: true
+#| code-fold: true
+import pandas as pd
+
+df = pd.read_csv("https://www.dropbox.com/s/bocjjyo1ehr5auz/insurance_costs_1.csv?dl=1")
+print(df.head())
+
+#check data types
+df.dtypes
+```
+
+#### Summaries about Data
+
+```{python}
+#| echo: true
+#| code-fold: true
+# pip install plotnine
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+from plotnine import ggplot, aes, geom_histogram, geom_boxplot, geom_bar, geom_col, labs, theme_minimal
+
+# graph 1 - distribution of insurance costs
+(
+    ggplot(df, aes(x = "charges")) + 
+    geom_histogram(bins = 30, fill = "skyblue", color = "black", alpha = 0.7) + 
+    labs(
+        title = "Distribution of Insurance Charges",
+        x = "Charges ($)",
+        y = "Count"
+    ) + 
+    theme_minimal()
+)
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+# graph 2 - boxplot of charges by smoker
+(
+    ggplot(df, aes(x = "smoker", y = "charges", fill = "smoker")) +
+    geom_boxplot(alpha = 0.7) + 
+    labs(
+        title = "Insurance Charges by Smoking Status",
+        x = "Smoker",
+        y = "Charges ($)"
+    ) + 
+    theme_minimal()
+)
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+# graph 3 - bar plot of average charges by region
+avg_region = df.groupby("region", as_index=False)['charges'].mean()
+(
+    ggplot(avg_region, aes(x = 'region', y = 'charges', fill = 'region')) + 
+    geom_col(alpha = 0.7) + 
+    labs(
+        title = "Average Insurance Costs by Region",
+        x = "region",
+        y = "Average Charges ($)"
+    ) + 
+    theme_minimal()
+)
+```
+
+
+### Part 2: Simple Linear Models
+
+```{python}
+#| echo: true
+#| code-fold: true
+#import sys
+#!{sys.executable} -m pip install scikit-learn
+
+```
+
+##### **Model 1** - Predicting the insurance charges from the beneficiary’s `age`:
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+# constructing a simple linear model to predict insurance charges from the beneficiary's age
+# first define predictors and target
+X1 = df.drop(columns = "charges")
+y1 = df["charges"]
+
+model1 = LinearRegression()
+model1.fit(
+    X=X1[["age"]],
+    y=y1
+)
+
+# report coefficients (Intercept and slope)
+intercept = round(model1.intercept_, 2)
+slope = round(model1.coef_[0], 2)
+
+print("Intercept:", intercept)
+print("Slope:", slope)
+
+# report goodness of fit
+r2_1 = model1.score(X1[["age"]], y1)
+print("R-squared:", round(r2_1, 2))
+
+# make prediction
+y_pred = model1.predict(X1[['age']])
+
+# test accuracy of prediction
+from sklearn.metrics import mean_squared_error
+import numpy as np
+mse_1 = mean_squared_error(y1, y_pred)
+rmse_1 = np.sqrt(mse_1)
+
+#print( "RMSE model1:", rmse_1)
+
+```
+
+**Intercept (3611.76):**  
+   - This represents the estimated insurance cost for someone aged 0. While this value isn’t meaningful in a practical sense (since no one is age 0 in the dataset), it provides a baseline for the model’s calculation.  
+**Slope (228.80):**    
+   - On average, for each additional year of age, insurance charges are predicted to increase by approximately $228.80. This positive coefficient suggests that older individuals tend to have higher medical costs, which aligns with real-world expectations as health risks typically rise with age.  
+**Model Fit (R^2 = 0.99):**    
+The R-squared value indicates that about 9.9% of the variation in insurance charges can be explained by age alone. This means that age is a weak but significant predictor; it influences insurance costs, but many other factors (like smoking status, BMI, and region) likely have a much stronger impact on the total charges.
+
+##### **Model 2** - Predicting the insurance charges from the beneficiary’s `age` and `sex`:
+
+```{python}
+#| echo: true
+#| code-fold: true
+# constructing a simple linear model to predict insurance charges from the beneficiary's age and sex
+# first convert categorical data to dummies as integers (1/0 instead of T/F)
+df_model2 = pd.get_dummies(df, columns = ["sex"], drop_first = True, dtype = int)
+
+# make sure dummies were created correctly 
+# print(df_model2.head())
+
+# redefine predictors and target (now sex will be 1 if male and 0 if female)
+X2 = df_model2.drop(columns = "charges")
+y2 = df_model2["charges"]
+
+# fit new model
+model2 = LinearRegression()
+model2.fit(
+    X=X2[["age", "sex_male"]],
+    y=y2
+)
+
+# report coefficients 
+intercept = round(model2.intercept_,2)
+age_coef = round(model2.coef_[0],2)
+sex_coef = round(model2.coef_[1],2)
+
+print("Intercept:", intercept)
+print("Age Coefficient:", age_coef)
+print("Sex (male) Coefficient:", sex_coef)
+
+
+# report goodness of fit
+r2_2 = model2.score(X2[["age", "sex_male"]], y2)
+print("R-squared:", round(r2_2,2))
+```
+
+##### **Model 3** - Predicting the insurance charges from the beneficiary’s `age` and `smoking status`:
+
+```{python}
+#| echo: true
+#| code-fold: true
+# first convert categorical data to dummies as integers (1/0 instead of T/F)
+df_model3 = pd.get_dummies(df, columns = ["smoker"], drop_first = True, dtype = int)
+
+# make sure dummies were created correctly
+#df_model3.head()
+
+# redefine predictors and target (now smoker will be 1 if yes and 0 if no)
+X3 = df_model3.drop(columns = "charges")
+y3 = df_model3["charges"]
+
+# fit new model
+model3 = LinearRegression()
+model3.fit(
+    X=X3[["age", "smoker_yes"]],
+    y=y3
+)
+# report coefficients 
+intercept3 = round(model3.intercept_, 2)
+age_coef2 = round(model3.coef_[0], 2)
+smoker_coef = round(model3.coef_[1], 2)
+
+print("Intercept:", intercept3)
+print("Age Coefficient:", age_coef2)
+print("Smoker (yes) Coefficient:", smoker_coef)
+
+
+# report goodness of fit
+r2_3 = model3.score(X3[["age", "smoker_yes"]], y3)
+print("R-squared:", round(r2_3,2))
+```
+
+##### Model 2 vs Model 3
+
+```{python}
+#| echo: true
+#| code-fold: true
+# make a prediction then get the MSE
+y_pred2 = model2.predict(X2[['age', 'sex_male']])
+mse_2 = mean_squared_error(y2, y_pred2)
+
+y_pred3 = model3.predict(X3[['age', 'smoker_yes']])
+mse_3 = mean_squared_error(y3, y_pred3)
+
+print( "MSE model 2:", round(mse_2, 2))
+print( "MSE model 3:", round(mse_3, 2))
+
+```
+
+Because Model 3 has a higher R² value and a lower Mean Squared Error (MSE) compared to Model 2, it clearly provides a better fit to the data.
+
+### Part 3: Multiple Linear Models  
+##### **Model 4** - Uses `age` and `bmi` as predictors
+```{python}
+#| echo: true
+#| code-fold: true
+# first define predictors and target
+X4 = df.drop(columns = "charges")
+y4 = df["charges"]
+# first model uses age and bmi as predictors
+model4 = LinearRegression()
+model4.fit(
+    X=X4[["age", "bmi"]],
+    y=y4
+)
+y_pred4 = model4.predict(X4[['age', 'bmi']])
+mse_4 = mean_squared_error(y4, y_pred4)
+r2_4 = model4.score(X4[["age", "bmi"]], y4)
+
+
+print( "MSE model 1:", round(mse_1, 2))
+print( "MSE model 4:", round(mse_4, 2))
+print("R-squared model 1:", round(r2_1,2))
+print("R-squared model 4:", round(r2_4,2))
+
+```
+
+Model 4 has a lower MSE and higher R^2 than Model 1
+
+##### **Model 5** - Uses `age` and `age^2` as predictors
+
+```{python}
+#| echo: true
+#| code-fold: true
+# first define predictors and target
+df5 = df
+df5["age2"] = df5["age"] ** 2
+
+# make sure new df has age^2 column
+# df5.head()
+
+X5 = df5.drop(columns = "charges")
+y5 = df5["charges"]
+# first model uses age and bmi as predictors
+model5 = LinearRegression()
+model5.fit(
+    X=X5[["age", "age2"]],
+    y=y5
+)
+y_pred5 = model5.predict(X5[['age', 'age2']])
+mse_5 = mean_squared_error(y5, y_pred5)
+r2_5 = model5.score(X5[["age", "age2"]], y5)
+
+
+print( "MSE model 1:", round(mse_1, 2))
+print( "MSE model 5:", round(mse_5, 2))
+print("R-squared model 1:", round(r2_1,4))
+print("R-squared model 5:", round(r2_5,4))
+
+```
+
+The MSE and R^2 for Models 1 and 5 are approximately equal, although model 5 has the advantage with a slightly smaller MSE and slightly larger R^2
+
+##### **4th Degree Polynomial Model**
+```{python}
+#| echo: true
+#| code-fold: true
+import warnings
+warnings.filterwarnings("ignore")
+
+df6 = df.copy()
+# need to standardize age to avoid warnings
+
+df6["age2"] = df6["age"] ** 2
+df6["age3"] = df6["age"] ** 3
+df6["age4"] = df6["age"] ** 4
+
+
+
+# make sure new df has age^2 column
+# df6.head()
+
+X6 = df6.drop(columns = "charges")
+y6 = df6["charges"]
+
+# first model uses age and bmi as predictors
+model6 = LinearRegression()
+model6.fit(
+    X=X6[["age", "age2", "age3", "age4"]],
+    y=y6
+)
+
+y_pred6 = model6.predict(X6[['age', 'age2', 'age3', 'age4']])
+mse_6 = mean_squared_error(y6, y_pred6)
+r2_6 = model6.score(X6[["age", "age2", "age3", "age4"]], y6)
+
+
+print("MSE model 1:", round(mse_1, 2))
+print("MSE 4th Degree Polynomal Model:", round(mse_6, 2))
+print("R-squared model 1:", round(r2_1,4))
+print("R-squared 4th Degree Polynomial Model:", round(r2_6,4))
+
+```
+
+##### **12th Degree Polynomial Model**
+```{python}
+#| echo: true
+#| code-fold: true
+import warnings
+warnings.filterwarnings("ignore")
+
+df7 = df.copy()
+# need to standardize age to avoid warnings
+df7["age2"] = df6["age"] ** 2
+df7["age3"] = df6["age"] ** 3
+df7["age4"] = df6["age"] ** 4
+df7["age5"] = df6["age"] ** 5
+df7["age6"] = df6["age"] ** 6
+df7["age7"] = df6["age"] ** 7
+df7["age8"] = df6["age"] ** 8
+df7["age9"] = df6["age"] ** 9
+df7["age10"] = df6["age"] ** 10
+df7["age11"] = df6["age"] ** 11
+df7["age12"] = df6["age"] ** 12
+
+# make sure new df has age^2 column
+# df6.head()
+
+X7 = df7.drop(columns = "charges")
+y7 = df7["charges"]
+
+# first model uses age and bmi as predictors
+model7 = LinearRegression()
+model7.fit(
+    X=X7[["age", "age2", "age3", "age4", "age5", "age6", "age7", "age8", "age9", "age10", "age11", "age12"]],
+    y=y7
+)
+
+y_pred7 = model7.predict(X7[["age", "age2", "age3", "age4", "age5", "age6", "age7", "age8", "age9", "age10", "age11", "age12"]])
+mse_7 = mean_squared_error(y7, y_pred7)
+r2_7 = model7.score(X7[["age", "age2", "age3", "age4", "age5", "age6", "age7", "age8", "age9", "age10", "age11", "age12"]], y7)
+
+
+print( "MSE model 1:", round(mse_1, 2))
+print( "MSE 12th Degree Polynomial Model:", round(mse_7, 2))
+print("R-squared model 1:", round(r2_1,4))
+print("R-squared 12th Degree Polynomial Model:", round(r2_7,4))
+
+```
+
+Based on both the Mean Squared Error (MSE) and R-squared (R^2) values, the 12th-degree polynomial model performs slightly better than the other models. It has the lowest MSE and the highest R^2 (0.1091), meaning it explains about 10.9 % of the variation in insurance charges—slightly more than the 4th-degree, quadratic, or multiple linear models.
+
+However, while the 12th-degree model technically fits the training data best, this improvement is very small compared to the lower-degree models. The increase in R^2 from 0.1078 (4th degree) to 0.1091 (12th degree) is minimal, suggesting that the higher-order terms are not adding much meaningful explanatory power. In practice, such a high-degree polynomial risks overfitting—capturing random noise rather than the true relationship between age and charges.
+
+Therefore, although the 12th-degree model has the best numerical performance by MSE and R^2, it is not necessarily the “best” model conceptually. The 4th-degree (or even simpler linear) model provides nearly identical accuracy with greater interpretability and stability, making it the more appropriate choice overall.
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+from plotnine import geom_point, geom_line, scale_color_manual
+import numpy as np
+
+# Generate a smooth range of ages
+age_seq = np.linspace(df["age"].min(), df["age"].max(), 200)
+
+# Create polynomial terms for prediction
+df_line = pd.DataFrame({
+    "age": age_seq,
+    "age2": age_seq**2,
+    "age3": age_seq**3,
+    "age4": age_seq**4
+})
+
+# Predict charges using your fitted model
+df_line["pred_charges"] = model6.predict(df_line)
+
+
+# Create plot
+(
+    ggplot(df, aes(x="age", y="charges", color="smoker")) +
+    geom_point(alpha=0.5, size=2) +  # points colored by smoker status
+    geom_line(df_line, aes(x="age", y="pred_charges"), color="blue", size=1.2) +
+    labs(
+        title="4th Degree Polynomial Fit: Age vs. Insurance Charges",
+        subtitle="Smokers generally have higher charges than non-smokers",
+        x="Age",
+        y="Insurance Charges ($)",
+        color="Smoker Status"
+    ) +
+    theme_minimal()
+)
+
+```
+
+### Part 4: New Data
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+from plotnine import geom_hline
+warnings.filterwarnings("ignore")
+
+#  Load datasets 
+fit_data = df.copy()  # original data for fitting models
+predict_data = pd.read_csv("https://www.dropbox.com/s/sky86agc4s8c6qe/insurance_costs_2.csv?dl=1")
+
+#  Prepare data (smoker as dummy variable)
+fit_data = pd.get_dummies(fit_data, columns=["smoker"], drop_first=True, dtype = int)
+predict_data = pd.get_dummies(predict_data, columns=["smoker"], drop_first=True, dtype = int)
+
+#  Create interaction terms for both datasets 
+fit_data["age_smoker"] = fit_data["age"] * fit_data["smoker_yes"]
+fit_data["bmi_smoker"] = fit_data["bmi"] * fit_data["smoker_yes"]
+
+predict_data["age_smoker"] = predict_data["age"] * predict_data["smoker_yes"]
+predict_data["bmi_smoker"] = predict_data["bmi"] * predict_data["smoker_yes"]
+
+#  Define target variable 
+y_fit = fit_data["charges"]
+y_true = predict_data["charges"]
+
+#  Model 1: age only 
+X1 = fit_data[["age"]]
+model1 = LinearRegression().fit(X1, y_fit)
+pred1 = model1.predict(predict_data[["age"]])
+
+#  Model 2: age + bmi 
+X2 = fit_data[["age", "bmi"]]
+model2 = LinearRegression().fit(X2, y_fit)
+pred2 = model2.predict(predict_data[["age", "bmi"]])
+
+#  Model 3: age + bmi + smoker (no interaction) 
+X3 = fit_data[["age", "bmi", "smoker_yes"]]
+model3 = LinearRegression().fit(X3, y_fit)
+pred3 = model3.predict(predict_data[["age", "bmi", "smoker_yes"]])
+
+#  Model 4: (age + bmi):smoker (interaction terms only) 
+X4 = fit_data[["age_smoker", "bmi_smoker"]]
+model4 = LinearRegression().fit(X4, y_fit)
+pred4 = model4.predict(predict_data[["age_smoker", "bmi_smoker"]])
+
+#  Model 5: (age + bmi)*smoker (full interaction) 
+X5 = fit_data[["age", "bmi", "smoker_yes", "age_smoker", "bmi_smoker"]]
+model5 = LinearRegression().fit(X5, y_fit)
+pred5 = model5.predict(predict_data[["age", "bmi", "smoker_yes", "age_smoker", "bmi_smoker"]])
+
+#  Compute MSE for each model on new data 
+mse_1 = mean_squared_error(y_true, pred1)
+mse_2 = mean_squared_error(y_true, pred2)
+mse_3 = mean_squared_error(y_true, pred3)
+mse_4 = mean_squared_error(y_true, pred4)
+mse_5 = mean_squared_error(y_true, pred5)
+
+#  Display results ---
+print("MSE Comparison on New Data:")
+print(f"Model 1 (age): {mse_1:.2f}")
+print(f"Model 2 (age + bmi): {mse_2:.2f}")
+print(f"Model 3 (age + bmi + smoker): {mse_3:.2f}")
+print(f"Model 4 ((age + bmi):smoker): {mse_4:.2f}")
+print(f"Model 5 ((age + bmi)*smoker): {mse_5:.2f}")
+
+#  Residual plot for best model 
+best_pred = pred5  # assuming model 5 performs best
+residuals = y_true - best_pred
+
+# Create a DataFrame for ggplot
+resid_df = pd.DataFrame({
+    "Predicted": best_pred,
+    "Residuals": residuals
+})
+
+# ggplot residual plot
+(
+    ggplot(resid_df, aes(x="Predicted", y="Residuals")) +
+    geom_point(alpha=0.6, color="purple") +
+    geom_hline(yintercept=0, color="black", linetype="dashed") +
+    labs(
+        title="Residual Plot for Final Chosen Model (Model 5)",
+        x="Predicted Charges ($)",
+        y="Residuals (Actual - Predicted)"
+    ) +
+    theme_minimal()
+)
+
+```
+
+### Part 5: Full Exploration
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# Add polynomial terms 
+fit_data["age2"] = fit_data["age"] ** 2
+fit_data["bmi2"] = fit_data["bmi"] ** 2
+
+predict_data["age2"] = predict_data["age"] ** 2
+predict_data["bmi2"] = predict_data["bmi"] ** 2
+
+# Define predictors (use all relevant quantitative and interaction terms)
+X_full = fit_data[["age", "age2", "bmi", "bmi2", "smoker_yes", "age_smoker", "bmi_smoker"]]
+y_full = fit_data["charges"]
+
+# Fit model on original (fit) data
+model_full = LinearRegression().fit(X_full, y_full)
+
+# Predict on new (predict) data
+pred_full = model_full.predict(
+    predict_data[["age", "age2", "bmi", "bmi2", "smoker_yes", "age_smoker", "bmi_smoker"]]
+)
+
+# Calculate MSE
+mse_full = mean_squared_error(predict_data["charges"], pred_full)
+print(f"MSE Full Exploration Model: {mse_full:.2f}")
+
+# Add predictions and residuals to predict_data
+predict_data["Predicted"] = pred_full
+predict_data["Residuals"] = predict_data["charges"] - predict_data["Predicted"]
+
+# Residual plot using ggplot
+(
+    ggplot(predict_data, aes(x="Predicted", y="Residuals"))
+    + geom_point(alpha=0.6, color="#0072B2")
+    + geom_hline(yintercept=0, color="black", linetype="dashed")
+    + labs(
+        title="Residual Plot for Full Exploration Model",
+        x="Predicted Charges ($)",
+        y="Residuals (Actual - Predicted)"
+    )
+    + theme_minimal()
+)
+
+```

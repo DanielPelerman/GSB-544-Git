@@ -2197,12 +2197,12 @@ vertical-align: -.125em;
 
 <section id="repository-link" class="level3">
 <h3 class="anchored" data-anchor-id="repository-link">Repository Link</h3>
-<p>You can view the full project repository on <a href="link">Github</a></p>
+<p>You can view the full project repository on <a href="https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%206/Lab">Github</a></p>
 </section>
 <section id="part-1-data-exploration" class="level3">
 <h3 class="anchored" data-anchor-id="part-1-data-exploration">Part 1: Data Exploration</h3>
 <p>First let’s preview the data:</p>
-<div id="1391dd96" class="cell" data-execution_count="1">
+<div id="513f34e0" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -2221,7 +2221,7 @@ vertical-align: -.125em;
 3   31  female  25.740     no  southeast   3756.62160
 4   60  female  25.840     no  northwest  28923.13692</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="53">
+<div class="cell-output cell-output-display" data-execution_count="70">
 <pre><code>age          int64
 sex         object
 bmi        float64
@@ -2233,13 +2233,13 @@ dtype: object</code></pre>
 </div>
 <section id="summaries-about-data" class="level4">
 <h4 class="anchored" data-anchor-id="summaries-about-data">Summaries about Data</h4>
-<div id="73897974" class="cell" data-execution_count="2">
+<div id="499846e8" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># pip install plotnine</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="8a0d151d" class="cell" data-execution_count="3">
+<div id="ed169532" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot, aes, geom_histogram, geom_boxplot, geom_bar, geom_col, labs, theme_minimal</span>
@@ -2264,7 +2264,7 @@ dtype: object</code></pre>
 </div>
 </div>
 </div>
-<div id="7d33511f" class="cell" data-execution_count="4">
+<div id="cff3c682" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># graph 2 - boxplot of charges by smoker</span></span>
@@ -2287,7 +2287,7 @@ dtype: object</code></pre>
 </div>
 </div>
 </div>
-<div id="90720c47" class="cell" data-execution_count="5">
+<div id="ddd8868e" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># graph 3 - bar plot of average charges by region</span></span>
@@ -2315,7 +2315,7 @@ dtype: object</code></pre>
 </section>
 <section id="part-2-simple-linear-models" class="level3">
 <h3 class="anchored" data-anchor-id="part-2-simple-linear-models">Part 2: Simple Linear Models</h3>
-<div id="193e3f02" class="cell" data-execution_count="6">
+<div id="0e554190" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">#import sys</span></span>
@@ -2324,7 +2324,7 @@ dtype: object</code></pre>
 </div>
 <section id="model-1---predicting-the-insurance-charges-from-the-beneficiarys-age" class="level5">
 <h5 class="anchored" data-anchor-id="model-1---predicting-the-insurance-charges-from-the-beneficiarys-age"><strong>Model 1</strong> - Predicting the insurance charges from the beneficiary’s <code>age</code>:</h5>
-<div id="a1ab437e" class="cell" data-execution_count="7">
+<div id="7219d8f1" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.pipeline <span class="im">import</span> Pipeline</span>
@@ -2378,7 +2378,7 @@ The R-squared value indicates that about 9.9% of the variation in insurance char
 </section>
 <section id="model-2---predicting-the-insurance-charges-from-the-beneficiarys-age-and-sex" class="level5">
 <h5 class="anchored" data-anchor-id="model-2---predicting-the-insurance-charges-from-the-beneficiarys-age-and-sex"><strong>Model 2</strong> - Predicting the insurance charges from the beneficiary’s <code>age</code> and <code>sex</code>:</h5>
-<div id="0da8fe07" class="cell" data-execution_count="8">
+<div id="8af6cb11" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># constructing a simple linear model to predict insurance charges from the beneficiary&#39;s age and sex</span></span>
@@ -2423,7 +2423,7 @@ R-squared: 0.1</code></pre>
 </section>
 <section id="model-3---predicting-the-insurance-charges-from-the-beneficiarys-age-and-smoking-status" class="level5">
 <h5 class="anchored" data-anchor-id="model-3---predicting-the-insurance-charges-from-the-beneficiarys-age-and-smoking-status"><strong>Model 3</strong> - Predicting the insurance charges from the beneficiary’s <code>age</code> and <code>smoking status</code>:</h5>
-<div id="3d540e57" class="cell" data-execution_count="9">
+<div id="ae2141fc" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first convert categorical data to dummies as integers (1/0 instead of T/F)</span></span>
@@ -2466,7 +2466,7 @@ R-squared: 0.76</code></pre>
 </section>
 <section id="model-2-vs-model-3" class="level5">
 <h5 class="anchored" data-anchor-id="model-2-vs-model-3">Model 2 vs Model 3</h5>
-<div id="0b7e9dd2" class="cell" data-execution_count="10">
+<div id="a0399383" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># make a prediction then get the MSE</span></span>
@@ -2491,7 +2491,7 @@ MSE model 3: 33719831.47</code></pre>
 <h3 class="anchored" data-anchor-id="part-3-multiple-linear-models">Part 3: Multiple Linear Models</h3>
 <section id="model-4---uses-age-and-bmi-as-predictors" class="level5">
 <h5 class="anchored" data-anchor-id="model-4---uses-age-and-bmi-as-predictors"><strong>Model 4</strong> - Uses <code>age</code> and <code>bmi</code> as predictors</h5>
-<div id="d6e57956" class="cell" data-execution_count="11">
+<div id="9522e4a9" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first define predictors and target</span></span>
@@ -2524,7 +2524,7 @@ R-squared model 4: 0.12</code></pre>
 </section>
 <section id="model-5---uses-age-and-age2-as-predictors" class="level5">
 <h5 class="anchored" data-anchor-id="model-5---uses-age-and-age2-as-predictors"><strong>Model 5</strong> - Uses <code>age</code> and <code>age^2</code> as predictors</h5>
-<div id="cfd096b6" class="cell" data-execution_count="12">
+<div id="cd382580" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># first define predictors and target</span></span>
@@ -2563,7 +2563,7 @@ R-squared model 5: 0.0996</code></pre>
 </section>
 <section id="th-degree-polynomial-model" class="level5">
 <h5 class="anchored" data-anchor-id="th-degree-polynomial-model"><strong>4th Degree Polynomial Model</strong></h5>
-<div id="85bb988d" class="cell" data-execution_count="13">
+<div id="88f21932" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
@@ -2611,7 +2611,7 @@ R-squared 4th Degree Polynomial Model: 0.1078</code></pre>
 </section>
 <section id="th-degree-polynomial-model-1" class="level5">
 <h5 class="anchored" data-anchor-id="th-degree-polynomial-model-1"><strong>12th Degree Polynomial Model</strong></h5>
-<div id="43235e50" class="cell" data-execution_count="14">
+<div id="4b1f3963" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
@@ -2664,7 +2664,7 @@ R-squared 12th Degree Polynomial Model: 0.1091</code></pre>
 <p>Based on both the Mean Squared Error (MSE) and R-squared (R^2) values, the 12th-degree polynomial model performs slightly better than the other models. It has the lowest MSE and the highest R^2 (0.1091), meaning it explains about 10.9 % of the variation in insurance charges—slightly more than the 4th-degree, quadratic, or multiple linear models.</p>
 <p>However, while the 12th-degree model technically fits the training data best, this improvement is very small compared to the lower-degree models. The increase in R^2 from 0.1078 (4th degree) to 0.1091 (12th degree) is minimal, suggesting that the higher-order terms are not adding much meaningful explanatory power. In practice, such a high-degree polynomial risks overfitting—capturing random noise rather than the true relationship between age and charges.</p>
 <p>Therefore, although the 12th-degree model has the best numerical performance by MSE and R^2, it is not necessarily the “best” model conceptually. The 4th-degree (or even simpler linear) model provides nearly identical accuracy with greater interpretability and stability, making it the more appropriate choice overall.</p>
-<div id="c95fd7ee" class="cell" data-execution_count="15">
+<div id="198f467a" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> geom_point, geom_line, scale_color_manual</span>
@@ -2712,7 +2712,7 @@ R-squared 12th Degree Polynomial Model: 0.1091</code></pre>
 </section>
 <section id="part-4-new-data" class="level3">
 <h3 class="anchored" data-anchor-id="part-4-new-data">Part 4: New Data</h3>
-<div id="5af01b97" class="cell" data-execution_count="16">
+<div id="dda48ff5" class="cell" data-execution_count="16">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> geom_hline</span>
@@ -2819,7 +2819,7 @@ Model 5 ((age + bmi)*smoker): 21786256.87</code></pre>
 </section>
 <section id="part-5-full-exploration" class="level3">
 <h3 class="anchored" data-anchor-id="part-5-full-exploration">Part 5: Full Exploration</h3>
-<div id="46b1e326" class="cell" data-execution_count="17">
+<div id="b3c61420" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add polynomial terms </span></span>

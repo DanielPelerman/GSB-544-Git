@@ -6,7 +6,7 @@ format:
 ---
 
 ### Repository Link 
-You can view the full project repository on [Github](link)
+You can view the full project repository on [Github](https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%206/Lab)
 
 ### Part 1: Data Exploration  
 First let's preview the data:  

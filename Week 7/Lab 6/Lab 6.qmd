@@ -1,0 +1,820 @@
+---
+title: "Lab 6"
+format:
+  html:
+    embed-resources: true
+---
+
+### Repository Link 
+You can view the full project repository on [Github]()
+
+
+**Note: Since the “Salary” variable represents annual salary in thousands of dollars, all numerical results and model coefficients in this report are interpreted in the same units (thousands of dollars).**
+
+### Part 0: Data Cleaning
+
+```{python}
+#| echo: true
+#| code-fold: true
+import pandas as pd
+
+df = pd.read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Main/Cal_Poly/Current_classes/GSB-544-Git/Week 7/Lab 6/Hitters.csv")
+
+print(df.shape)
+print(df.info())
+```
+  
+Since some records have missing values for Salary, we cannot use them for prediction, so we remove them from the data frame. We are still left with a large number of records so this is okay.
+
+```{python}
+#| echo: true
+#| code-fold: true
+hitters = df.dropna(subset = ["Salary"])
+print(hitters.info())
+hitters.head()
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+import pandas as pd
+import numpy as np
+from sklearn.pipeline import Pipeline
+from sklearn.compose import make_column_selector, ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, PolynomialFeatures
+from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import r2_score
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+X = hitters.drop(["Salary"], axis = 1)
+y = hitters["Salary"]
+
+ct = ColumnTransformer(
+  [
+    ("dummify",
+    OneHotEncoder(sparse_output = False, handle_unknown='ignore'),
+    make_column_selector(dtype_include=object)),
+    ("standardize",
+    StandardScaler(),
+    make_column_selector(dtype_include=np.number))
+  ],
+  remainder = "passthrough"
+).set_output(transform="pandas")
+
+ct.fit(X)
+ct.transform(X)
+```
+
+### Part I: Different Model Specs  
+#### Part A: Regression Without Regularization
+
+```{python}
+#| echo: true
+#| code-fold: true
+lr_pipeline = Pipeline(
+  [("preprocessing", ct),
+  ("linear_regression", LinearRegression())]
+)
+
+lr_pipeline_fitted = lr_pipeline.fit(X, y)
+lr_pipeline_fitted
+
+# Access model and feature names
+model = lr_pipeline_fitted.named_steps["linear_regression"]
+feature_names = lr_pipeline_fitted.named_steps["preprocessing"].get_feature_names_out()
+
+# Combine into a DataFrame
+coef_table = pd.DataFrame({
+    "Feature": feature_names,
+    "Coefficient": model.coef_
+}).sort_values(by="Coefficient", ascending=False).reset_index(drop=True)
+
+# Display
+print("Intercept:", model.intercept_)
+coef_table
+
+```
+
+**Coefficient Interpretation:**   
+**Biggest 3:**   
+<b>1. Career Runs (`standardize__CRuns` = 480.75):</b> A one standard deviation increase in a player’s career runs is associated with an estimated 480-point increase in salary, holding all other factors constant.  
+&emsp;This implies that players who have scored more runs over their careers tend to earn substantially  
+&emsp; higher salaries, reflecting the strong value placed on long-term offensive success.  
+<br><b>2. Hits (`standardize__Hits` = 337.83):</b> A one standard deviation increase in the number of hits during the 1986 season corresponds to about a 338-point increase in salary.  
+&emsp;This suggests that recent, high-level performance in the most recent season has a large impact on  
+&emsp;pay; teams reward players who are currently performing well.  
+<br><b>3. Career RBI's (`standardize__CRBI` = 260.69):</b> A one standard deviation increase in a player’s career runs batted in (RBIs) is linked to an estimated 261-point increase in salary.   
+&emsp;This shows that cumulative offensive productivity (helping score runs for the team) is another key  
+&emsp;determinant of player value.  
+
+**Lowest 2:**  
+<b>4. Career At-Bats (`standardize__CAtBat` = -391.04):</b> A one standard deviation increase in career at-bats is associated with roughly a 391-point decrease in salary, holding other variables constant.  
+&emsp;While this may seem counterintuitive, it likely reflects that players who have had many at-bats but  
+&emsp;relatively fewer runs or hits may be less efficient hitters — indicating longevity without elite productivity.  
+<br><b>5. At-Bats (`standardize__AtBat` = -291.1):</b> Similarly, players with more at-bats during the 1986 season tend to have lower predicted salaries, after controlling for performance measures like hits and RBIs.  
+&emsp;This could suggest that simply having more opportunities to bat doesn’t necessarily translate to higher  
+&emsp;pay; it’s the quality of performance (Hits, RBIs) rather than quantity of appearances that matters.
+
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+mse_scores = cross_val_score(
+    lr_pipeline, 
+    X, 
+    y, 
+    cv = 5, 
+    scoring = 'neg_mean_squared_error')
+
+mse_scores = -mse_scores
+
+mean_mse = np.mean(mse_scores)
+
+
+print("Cross-validated MSEs for each fold:", mse_scores)
+print(f"\nExpected MSE for predicted 1989 Salaries: {mean_mse:.3f}")
+```
+
+#### Part B: Ridge Regression
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.model_selection import GridSearchCV
+
+# Define pipeline
+ridge_pipeline = Pipeline([
+    ("preprocessing", ct),
+    ("ridge_regression", Ridge())
+])
+
+# Define range of alphas to tune
+alphas = {'ridge_regression__alpha': np.array([100, 10, 1, 0.1, 0.001])}
+
+# Grid search for best alpha
+gscv = GridSearchCV(
+    ridge_pipeline,
+    param_grid=alphas,
+    cv=5,
+    scoring='neg_mean_squared_error',
+)
+
+
+# Fit model
+gscv_fitted = gscv.fit(X, y)
+
+best_model = gscv_fitted.best_estimator_
+
+# Access final Ridge model and feature names
+ridge_model = best_model.named_steps["ridge_regression"]
+feature_names = best_model.named_steps["preprocessing"].get_feature_names_out()
+
+# Create coefficient table
+coef_table = pd.DataFrame({
+    "Feature": feature_names,
+    "Coefficient": ridge_model.coef_
+}).sort_values(by="Coefficient", ascending=False).reset_index(drop=True)
+
+# Display best alpha, intercept and coefficients
+print("Best alpha:", gscv_fitted.best_params_['ridge_regression__alpha'])
+print("\nIntercept:", round(ridge_model.intercept_, 3))
+display(coef_table)
+
+best_mse = -gscv_fitted.best_score_  # convert back to positive MSE
+print("Expected MSE for predicted 1989 Salaries:", round(best_mse, 3))
+
+```
+
+
+**Coefficient Interpretation:**   
+**Biggest 3:**   
+<b>1. Career Runs (`standardize__CRuns` = 320.41):</b> A one standard deviation increase in a player’s career runs is associated with an estimated 320-point increase in salary, holding other factors constant.    
+&emsp;This implies that players with stronger long-term offensive records tend to earn significantly higher  
+&emsp;salaries, underscoring the lasting importance of cumulative career performance.
+<br><b>2. Hits (`standardize__Hits` = 296.65):</b> A one standard deviation increase in the number of hits during the 1986 season corresponds to about a 297-point increase in salary.  
+&emsp;This suggests that recent, strong seasonal performance continues to play a major role in salary  
+&emsp; determination; teams reward players currently demonstrating high productivity. 
+<br><b>3. Career RBI's (`standardize__CRBI` = 160.39):</b> A one standard deviation increase in career runs batted in (RBIs) is associated with a 160-point increase in salary.   
+&emsp;This shows that consistent offensive contributions throughout a player’s career remain a key   
+&emsp;determinant of player value.
+
+**Lowest 2:**  
+<b>4. Career At-Bats (`standardize__CAtBat` = -225.41):</b> A one standard deviation increase in career at-bats corresponds to roughly a 225-point decrease in salary, holding all other variables constant.  
+&emsp;This may indicate that players who have had many opportunities to bat but fewer achievements (in runs   &emsp;or hits) are viewed as less efficient, suggesting longevity without high performance does not    
+&emsp; necessarily lead to higher pay.
+<br><b>5. At-Bats (`standardize__AtBat` = -270.69):</b> Players with more at-bats during the 1986 season tend to have lower predicted salaries, after controlling for other performance indicators.  
+&emsp;This implies that simply appearing more often at the plate does not equate to higher value—teams  
+ &emsp;place greater emphasis on productivity (hits, RBIs, and runs) rather than the number of attempts.
+
+
+#### Part C: Lasso Regression
+
+```{python}
+#| echo: true
+#| code-fold: true
+pd.set_option("display.float_format", "{:.3f}".format)
+
+# Define pipeline
+lasso_pipeline = Pipeline([
+    ("preprocessing", ct),
+    ("lasso_regression", Lasso(max_iter=10000))
+])
+
+# Define alpha range for tuning
+alphas = {'lasso_regression__alpha': np.array([100, 10, 1, 0.1, 0.01])}
+
+# Grid search with 5-fold CV
+gscv = GridSearchCV(
+    lasso_pipeline,
+    param_grid=alphas,
+    cv=5,
+    scoring='neg_mean_squared_error',
+)
+
+# Fit model
+gscv_fitted = gscv.fit(X, y)
+
+# Get best model
+best_model = gscv_fitted.best_estimator_
+
+print("Best alpha:", gscv_fitted.best_params_['lasso_regression__alpha'])
+
+# Access final Lasso model and feature names
+lasso_model = best_model.named_steps["lasso_regression"]
+feature_names = best_model.named_steps["preprocessing"].get_feature_names_out()
+
+# Create coefficient table
+coef_table = pd.DataFrame({
+    "Feature": feature_names,
+    "Coefficient": lasso_model.coef_
+}).sort_values(by="Coefficient", ascending=False).reset_index(drop=True).round(3)
+
+# Display intercept and coefficient table
+print("\nIntercept:", lasso_model.intercept_)
+display(coef_table)
+
+best_mse = -gscv_fitted.best_score_  # convert back to positive MSE
+print("Expected MSE for predicted 1989 Salaries:", round(best_mse, 3))
+
+```
+
+
+**Coefficient Interpretation:**   
+**Biggest 3:**  
+<b>1. Career Runs (`standardize__CRuns` = 375.57):</b> A one standard deviation increase in a player’s career runs is associated with roughly a $376 higher salary, holding other factors constant.  
+&emsp;This shows that players with strong long-term offensive records earn substantially higher salaries;   
+&emsp;career scoring ability is highly valued. 
+<br><b>2. Hits (`standardize__Hits` = 304.36):</b> Players who recorded more hits during the 1986 season tend to earn higher salaries, with a one-SD increase linked to about a $304 rise.  
+&emsp;This reflects the importance of recent batting performance; current success at the plate remains a  
+&emsp;major determinant of pay.  
+<br><b>3. Career RBI's (`standardize__CRBI` = 192.61):</b> Each standard-deviation increase in career runs batted in (CRBIs) is tied to about a $193 salary increase.   
+&emsp;This underscores how long-term productivity in driving in runs translates into higher compensation,   
+&emsp;further reinforcing the importance of cumulative career performance.   
+
+**Lowest 2:**  
+<b>4. At-Bats (`standardize__AtBat` = -282.37):</b> A one–SD increase in at-bats is associated with a roughly $282 decrease in predicted salary, controlling for other stats.  
+&emsp;This negative sign could indicate that players who accumulate many at-bats without corresponding  
+&emsp;high run or hit totals may be seen as less efficient offensive contributors; suggesting quantity  
+&emsp;doesn’t equal quality.
+<br><b>5. Career Walks (`standardize__CWalks` = -189.65):</b> A one–SD increase in career walks predicts about a $190 lower salary, which is somewhat counterintuitive.  
+&emsp;It may reflect multicollinearity (since walks correlate with other batting stats) or the model’s attempt to  
+&emsp;shrink correlated predictors; Lasso penalizes redundant variables more heavily, sometimes pushing  
+&emsp;their influence downward.
+
+**Coefficients = 0**  
+Variables with coefficients exactly 0 (e.g., League_N, NewLeague_A, RBI, CHits) were removed from the model by the Lasso penalty.  
+Meaning:  
+Lasso applies L1 regularization, which not only shrinks coefficients but can set some of them exactly to zero, effectively performing feature selection.
+This tells us those variables do not add unique predictive value once stronger, correlated features (like CRuns, Hits, and CRBI) are already in the model.
+
+#### Part D: Elastic-Net 
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
+
+from sklearn.linear_model import ElasticNet
+pd.set_option("display.float_format", "{:.3f}".format)
+
+# Define pipeline
+elastic_pipeline = Pipeline([
+    ("preprocessing", ct),
+    ("elastic_net", ElasticNet(max_iter=10000))
+])
+
+# Define parameter grid for alpha (strength) and l1_ratio (balance)
+param_grid = {
+    "elastic_net__alpha": [0.001, 0.01, 0.1, 1, 10, 100],
+    "elastic_net__l1_ratio": np.arange(0.0, 1.2, 0.2)  # 0 = Ridge, 1 = Lasso
+}
+
+# Grid search with 5-fold CV using MSE
+gscv = GridSearchCV(
+    elastic_pipeline,
+    param_grid=param_grid,
+    cv=5,
+    scoring='neg_mean_squared_error',
+    return_train_score=True
+)
+
+# Fit model
+gscv_fitted = gscv.fit(X, y)
+
+# Get best model
+best_model = gscv_fitted.best_estimator_
+
+# Report results
+best_alpha = gscv_fitted.best_params_['elastic_net__alpha']
+best_l1 = gscv_fitted.best_params_['elastic_net__l1_ratio']
+best_mse = -gscv_fitted.best_score_
+
+print("Best alpha:", best_alpha)
+print("Best l1_ratio:", best_l1)
+print("Expected MSE for predicted 1989 Salaries:", round(best_mse, 3))
+
+# Access final Elastic Net model and feature names
+elastic_model = best_model.named_steps["elastic_net"]
+feature_names = best_model.named_steps["preprocessing"].get_feature_names_out()
+
+# Create coefficient table
+coef_table = pd.DataFrame({
+    "Feature": feature_names,
+    "Coefficient": elastic_model.coef_
+}).sort_values(by="Coefficient", ascending=False).reset_index(drop=True).round(3)
+
+# Display intercept and coefficients
+print("\nIntercept:", elastic_model.intercept_)
+display(coef_table)
+```
+
+**Coefficient Interpretation:**   
+**Biggest 3:**  
+<br><b>1. Hits (`standardize__Hits` = 249.93):</b> A one standard deviation increase in season hits is associated with about a $250 increase in salary, holding other variables constant.  
+&emsp;This emphasizes that strong recent offensive performance, successfully hitting the ball and getting on &emsp; base, remains one of the biggest salary drivers.
+<br><b>2. Career Runs (`standardize__CRuns` = 226.83):</b> Players who have accumulated more career runs scored tend to earn higher salaries, with each one–SD increase tied to about a $227 increase in salary.  
+&emsp;This underscores the importance of sustained offensive contributions over a player’s career; long-term &emsp; productivity pays off.
+<br><b>3. Career Hits (`standardize__CHits` = 123.65):</b> A one–SD rise in career hits corresponds to about a $124 increase in salary.  
+&emsp;Like career runs, this shows that consistency and proven performance across seasons heavily  
+&emsp;influence pay; teams value players with a solid track record of getting on base.
+
+**Lowest 2:**  
+<b>4. At-Bats (`standardize__AtBat` = -233.29):</b> A one–SD increase in at-bats is associated with a roughly $233 decrease in predicted salary, controlling for other stats.  
+&emsp;This likely reflects that players who have many at-bats but fewer runs or hits are less efficient  
+&emsp;offensively; indicating quantity without matching quality doesn’t raise salary expectations.
+<br><b>5. Career Walks (`standardize__CWalks` = -156.49):</b> A one–SD increase in career walks predicts about a $156 lower salary, which is somewhat counterintuitive.  
+&emsp;This suggests that walks (which rely more on patience than visible power metrics) may not be as highly &emsp; rewarded financially as runs or hits. It could also signal multicollinearity; walks often correlate with    
+&emsp; other batting stats, so Elastic Net penalizes redundant features to simplify the model.
+
+
+### Part 2: Variable Selection
+
+The coefficients from the Elastic Net model were used to identify the most important variables because Elastic Net combines the strengths of both Ridge and Lasso regression. It balances coefficient shrinkage (like Ridge) with variable selection (like Lasso), making it more stable and reliable when predictors are correlated. As a result, its coefficients provide a more accurate reflection of each variable’s contribution to salary prediction.
+
+**Most Important Variables (based on absolute coefficient size)** 
+
+ - Most Important Numeric Variable  
+&emsp;- Hits  
+ - Top 5 Numeric Variables  
+&emsp;1. Hits  
+&emsp;2. AtBat  
+&emsp;3. Career Runs (CRuns)  
+&emsp;4. Career Walks (CWalks)  
+&emsp;5. Career Hits (CHits)  
+ - Most Important Categorical Variable  
+&emsp;- Division (represented by Division_E and Division_W)
+
+**Linear Regression Model Feature Sets**
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# Single best numeric variable
+X_best1 = X[["Hits"]]
+
+# Top five numeric variables
+top5_vars = ["Hits", "AtBat", "CRuns", "CWalks", "CHits"]
+X_best5 = X[top5_vars]
+
+# Create Division dummies 
+div_dummies = pd.get_dummies(X["Division"], prefix="Division", drop_first=False)
+
+# Add them to X for interaction creation
+X_with_div = pd.concat([X[top5_vars], div_dummies], axis=1)
+
+# create the interaction dataset 
+X_interact = X_with_div.copy()
+
+# Create interactions between each numeric var and each Division dummy
+for var in top5_vars:
+    for div_col in div_dummies.columns:
+        X_interact[f"{var}_x_{div_col}"] = X_with_div[var] * X_with_div[div_col]
+
+# Cross-validate each model
+
+# Model 1: 1 best numeric variable
+ols_mse_1 = -np.mean(cross_val_score(lr_pipeline, X_best1, y, cv=5, scoring="neg_mean_squared_error"))
+print("Linear Regression (Best Numeric Variable) Expected MSE:", round(ols_mse_1,3))
+
+# Model 2: 5 best numeric variables
+ols_mse_5 = -np.mean(cross_val_score(lr_pipeline, X_best5, y, cv=5, scoring="neg_mean_squared_error"))
+print("Linear Regression (Best 5 numeric variables) Expected MSE:", round(ols_mse_5, 3))
+
+# Model 3: 5 best numeric variables + interactions with Division
+ols_mse_int = -np.mean(cross_val_score(lr_pipeline, X_interact, y, cv=5, scoring="neg_mean_squared_error"))
+print("Linear Regression (Best Numeric Vars. + Interactions with Division) Expected MSE:", round(ols_mse_int, 3))
+
+```
+
+
+**Ridge Regression Model Feature Sets**
+
+```{python}
+#| echo: true
+#| code-fold: true
+alphas = {"ridge_regression__alpha": np.array([100, 10, 1, 0.1, 0.01, 0.001])}
+
+gscv = GridSearchCV(
+    ridge_pipeline,
+    param_grid=alphas,
+    cv=5,
+    scoring="neg_mean_squared_error"
+)
+
+#  Model 1: 1 best numeric variable 
+gscv.fit(X_best1, y)
+ridge_mse_1 = -gscv.best_score_
+ridge_alpha_1 = gscv.best_params_["ridge_regression__alpha"]
+print(f"Ridge (1 variable) — Best α: {ridge_alpha_1}, Expected MSE: {ridge_mse_1:.3f}")
+
+#  Model 2: 5 best numeric variables 
+gscv.fit(X_best5, y)
+ridge_mse_5 = -gscv.best_score_
+ridge_alpha_5 = gscv.best_params_["ridge_regression__alpha"]
+print(f"Ridge (5 variables) — Best α: {ridge_alpha_5}, Expected MSE: {ridge_mse_5:.3f}")
+
+#  Model 3: 5 best numeric + interactions 
+gscv.fit(X_interact, y)
+ridge_mse_int = -gscv.best_score_
+ridge_alpha_int = gscv.best_params_["ridge_regression__alpha"]
+print(f"Ridge (5 vars + interactions) — Best α: {ridge_alpha_int}, Expected MSE: {ridge_mse_int:.3f}")
+
+#  Summary table 
+ridge_results = pd.DataFrame({
+    "Model": ["1 Variable", "5 Variables", "5 + Interactions"],
+    "Best Alpha": [ridge_alpha_1, ridge_alpha_5, ridge_alpha_int],
+    "Expected MSE": [ridge_mse_1, ridge_mse_5, ridge_mse_int]
+})
+
+print("\nRidge Regression Comparison:")
+display(ridge_results)
+
+```
+<br>
+
+**Lasso Regression Model Feature Sets**
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+alphas = {"lasso_regression__alpha": np.array([100, 10, 1, 0.1, 0.01, 0.001])}
+
+gscv = GridSearchCV(
+    lasso_pipeline,
+    param_grid=alphas,
+    cv=5,
+    scoring="neg_mean_squared_error"
+)
+
+#  Model 1: 1 best numeric variable 
+gscv.fit(X_best1, y)
+lasso_mse_1 = -gscv.best_score_
+lasso_alpha_1 = gscv.best_params_["lasso_regression__alpha"]
+print(f"Lasso (1 variable) — Best α: {lasso_alpha_1}, Expected MSE: {lasso_mse_1:.3f}")
+
+#  Model 2: 5 best numeric variables 
+gscv.fit(X_best5, y)
+lasso_mse_5 = -gscv.best_score_
+lasso_alpha_5 = gscv.best_params_["lasso_regression__alpha"]
+print(f"Lasso (5 variables) — Best α: {lasso_alpha_5}, Expected MSE: {lasso_mse_5:.3f}")
+
+#  Model 3: 5 best numeric + interactions 
+gscv.fit(X_interact, y)
+lasso_mse_int = -gscv.best_score_
+lasso_alpha_int = gscv.best_params_["lasso_regression__alpha"]
+print(f"Lasso (5 vars + interactions) — Best α: {lasso_alpha_int}, Expected MSE: {lasso_mse_int:.3f}")
+
+#  Summary table
+lasso_results = pd.DataFrame({
+    "Model": ["1 Variable", "5 Variables", "5 + Interactions"],
+    "Best Alpha": [lasso_alpha_1, lasso_alpha_5, lasso_alpha_int],
+    "Expected MSE": [lasso_mse_1, lasso_mse_5, lasso_mse_int]
+})
+
+print("\nLasso Regression Comparison:")
+display(lasso_results)
+
+```
+<br>
+
+**Elastic Net Model Feature Sets**
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+param_grid = {
+    "elastic_net__alpha": [0.001, 0.01, 0.1, 1, 10, 100],
+    "elastic_net__l1_ratio": np.arange(0.0, 1.2, 0.2) 
+}
+
+gscv = GridSearchCV(
+    elastic_pipeline,
+    param_grid=param_grid,
+    cv=5,
+    scoring="neg_mean_squared_error"
+)
+
+# Model 1: 1 best numeric variable 
+gscv.fit(X_best1, y)
+en_mse_1 = -gscv.best_score_
+en_alpha_1 = gscv.best_params_["elastic_net__alpha"]
+en_l1_1 = gscv.best_params_["elastic_net__l1_ratio"]
+print(f"Elastic Net (1 variable) — Best α: {en_alpha_1}, Best l1_ratio: {en_l1_1:.1f}, Expected MSE: {en_mse_1:.3f}")
+
+#  Model 2: 5 best numeric variables 
+gscv.fit(X_best5, y)
+en_mse_5 = -gscv.best_score_
+en_alpha_5 = gscv.best_params_["elastic_net__alpha"]
+en_l1_5 = gscv.best_params_["elastic_net__l1_ratio"]
+print(f"Elastic Net (5 variables) — Best α: {en_alpha_5}, Best l1_ratio: {en_l1_5:.1f}, Expected MSE: {en_mse_5:.3f}")
+
+#  Model 3: 5 best numeric + interactions 
+gscv.fit(X_interact, y)
+en_mse_int = -gscv.best_score_
+en_alpha_int = gscv.best_params_["elastic_net__alpha"]
+en_l1_int = gscv.best_params_["elastic_net__l1_ratio"]
+print(f"Elastic Net (5 vars + interactions) — Best α: {en_alpha_int}, Best l1_ratio: {en_l1_int:.1f}, Expected MSE: {en_mse_int:.3f}")
+
+# Summary table 
+elastic_results = pd.DataFrame({
+    "Model": ["1 Variable", "5 Variables", "5 + Interactions"],
+    "Best Alpha": [en_alpha_1, en_alpha_5, en_alpha_int],
+    "Best l1_ratio": [en_l1_1, en_l1_5, en_l1_int],
+    "Expected MSE": [en_mse_1, en_mse_5, en_mse_int]
+})
+
+print("\nElastic Net Regression Comparison:")
+display(elastic_results)
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+import pandas as pd
+
+final_results = pd.DataFrame({
+    "Model Type": [
+        "Linear Regression",
+        "Ridge Regression",
+        "Lasso Regression",
+        "Elastic Net"
+    ],
+    "Best Feature Set": [
+        "5 Variables",               # ✅ lowest MSE (127,818 < 131,736)
+        "5 Vars + Interactions",     # ✅ lowest MSE (125,118 < 127,274)
+        "5 Variables",               # ✅ lowest MSE (127,137 < 127,632)
+        "5 Vars + Interactions"      # ✅ lowest MSE (125,063 < 127,137)
+    ],
+    "Best Alpha": [
+        "—",                         # Linear regression has no alpha
+        100.0,                       # ✅ best for Ridge interactions
+        1.0,                         # ✅ best for Lasso 5 variables
+        1.0                          # ✅ best for Elastic Net interactions
+    ],
+    "Best l1_ratio": [
+        "—",                         # not applicable
+        "—",
+        "—",
+        0.4                          # ✅ best for Elastic Net interactions
+    ],
+    "Expected MSE": [
+        127818.200,                  # ✅ Linear regression (5 vars)
+        125118.564,                  # ✅ Ridge regression (interactions)
+        127137.528,                  # ✅ Lasso regression (5 vars)
+        125063.669                   # ✅ Elastic Net (interactions)
+    ]
+})
+
+print("Overall Model Comparison:")
+display(final_results)
+
+```
+
+**Best Model**  
+Based on the validation MSE results, the Elastic Net regression model using the five best numeric variables and their interactions with the Division variable achieved the best overall performance, with an expected MSE of 125,063.669. This combination provided the most accurate salary predictions while balancing the strengths of Ridge (stability) and Lasso (variable selection) through its α = 1.0 and l1_ratio = 0.4 parameters. The next best performer was the Ridge regression model with the same feature set, showing a slightly higher MSE of 125,118.564. Overall, these results indicate that incorporating regularization and limited interaction effects improves predictive accuracy compared to simpler linear models.
+
+
+### Part 3: Discussion  
+
+#### Part 3A - Comparing Ridge Models With Ordinary Regression Models
+```{python}
+#| echo: true
+#| code-fold: true
+
+
+# Define Ridge alphas to match earlier best values
+ridge_best_alphas = {
+    "1 Variable": 10.0,
+    "5 Variables": 1.0,
+    "5 + Interactions": 100.0
+}
+
+# Helper function to fit Linear and Ridge models and return coefficient comparison
+def compare_lin_ridge(X_set, y, feature_label):
+    # Linear Regression pipeline
+    lr_pipe = Pipeline([
+        ("preprocessing", ct),
+        ("linear_regression", LinearRegression())
+    ])
+    lr_pipe.fit(X_set, y)
+    lin_coefs = lr_pipe.named_steps["linear_regression"].coef_
+
+    # Ridge Regression pipeline with matching alpha
+    ridge_pipe = Pipeline([
+        ("preprocessing", ct),
+        ("ridge_regression", Ridge(alpha=ridge_best_alphas[feature_label]))
+    ])
+    ridge_pipe.fit(X_set, y)
+    ridge_coefs = ridge_pipe.named_steps["ridge_regression"].coef_
+
+    # Extract feature names
+    feature_names = ridge_pipe.named_steps["preprocessing"].get_feature_names_out()
+
+    # Combine into DataFrame
+    coef_df = pd.DataFrame({
+        "Feature": feature_names,
+        "Linear": lin_coefs,
+        "Ridge": ridge_coefs
+    }).round(3)
+
+    # Display top coefficients by absolute value (for clarity)
+    print(f"\nCoefficient Comparison for {feature_label}")
+    display(coef_df.reindex(coef_df["Linear"].abs().sort_values(ascending=False).index).head(10))
+
+    return coef_df
+
+# Run comparisons for all three feature sets
+coef_1 = compare_lin_ridge(X_best1, y, "1 Variable")
+coef_5 = compare_lin_ridge(X_best5, y, "5 Variables")
+coef_int = compare_lin_ridge(X_interact, y, "5 + Interactions")
+
+```
+
+**Comparison Summary**  
+When comparing the Ridge regression models to the corresponding ordinary least squares (OLS) models, the Ridge coefficients were consistently smaller in magnitude across all feature sets. This outcome is expected because Ridge regression introduces a penalty  that discourages large coefficient values, effectively shrinking them toward zero without eliminating any variables.
+
+For the single-variable model, the difference between the OLS and Ridge coefficients was minimal (197.52 vs. 190.28), showing that regularization has little impact when model complexity is low. However, in the five-variable model, Ridge coefficients showed moderate shrinkage, indicating that Ridge reduced the influence of less strongly predictive variables.
+
+The shrinkage effect was most pronounced in the model that included interactions with Division. In this case, the Ridge coefficients were substantially smaller than those from the OLS model, reflecting the increased complexity and multicollinearity introduced by interaction terms. This demonstrates Ridge regression’s main advantage: by penalizing large coefficients in high-dimensional settings, it reduces overfitting and improves generalization performance on unseen data.
+
+#### Part 3b - Comparing Lasso Model From Part 1 With Lasso Models created from Feature Sets in Part 2
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+import pandas as pd
+
+# Part 1: Original LASSO model
+lasso_part1_alpha = 1.0      
+lasso_part1_mse = 119758.109 
+
+print("Lasso Model from Part 1")
+print(f"Best Alpha: {lasso_part1_alpha}")
+print(f"Expected MSE: {round(lasso_part1_mse, 3)}")
+
+# Part 2: LASSO models with feature sets
+lasso_results_part2 = pd.DataFrame({
+    "Model": [
+        "1 Variable",
+        "5 Variables",
+        "5 + Interactions"
+    ],
+    "Best Alpha": [10.0, 1.0, 10.0],
+    "Expected MSE": [173061.635, 127137.528, 127632.441]
+}).round(3)
+
+print("\nLASSO Models from Part 2:")
+display(lasso_results_part2)
+
+```
+
+**Comparison Summary**  
+Comparing the LASSO model from Part 1 to the three LASSO models created in Part 2 shows that the optimal alpha values and mean squared errors (MSEs) vary depending on the feature set. The Part 1 model had a best alpha of 1.0 and achieved the lowest MSE (119,758), suggesting that it was tuned effectively for the simpler dataset. In Part 2, the 5-variable model also selected alpha = 1.0, but its MSE increased slightly to 127,138, while the other models with alpha = 10.0 produced higher MSEs. This makes sense because as additional predictors and interactions are added, the model’s complexity increases, and stronger regularization (higher alpha) is needed to prevent overfitting. The differences in MSEs also reflect how LASSO’s penalty performs variable selection;shrinking or eliminating coefficients for less relevant features, which can improve simplicity but sometimes leads to higher bias when more complex interactions are included.
+
+#### Part 3C - Comparing The MSE's for the Elastic Net Models with those of the Ridge and Lasso Models
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+
+# Create MSE comparison table for all feature sets
+mse_data = {
+    "Model Type": ["Ridge Regression", "Lasso Regression", "Elastic Net"],
+    "1 Variable": [172755.976, 173061.635, 172586.078],
+    "5 Variables": [127274.599, 127137.528, 127137.528],
+    "5 + Interactions": [125118.564, 127632.441, 125063.669]
+}
+
+# Create dataframe
+mse_comparison = pd.DataFrame(mse_data).set_index("Model Type").round(3)
+
+print("MSE Comparison Across All Feature Sets:")
+display(mse_comparison)
+
+
+```
+
+**Comparison Summary**  
+When comparing the MSEs across Ridge, Lasso, and Elastic Net models, the Elastic Net consistently achieved the lowest error for nearly every feature set. For the single-variable and five-variable feature sets, Elastic Net’s MSEs (172,586.078 and 127,137.528) were nearly identical to or slightly better than Ridge and Lasso. However, for the most complex model with five variables plus interaction terms, Elastic Net performed best overall with an MSE of 125,063.669; slightly outperforming Ridge (125,118.564) and noticeably better than LASSO (127,632.441).
+
+This result makes sense because Elastic Net combines the strengths of both Ridge and Lasso regularization. It balances Ridge’s ability to handle multicollinearity and stabilize coefficient estimates with Lasso’s feature selection ability, which removes less informative predictors. By blending these two approaches, Elastic Net avoids the limitations of relying solely on one penalty type, leading to the most efficient bias–variance tradeoff and the lowest prediction error overall.
+
+### Part 4: Final Model
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| fig-cap: "Final Elastic Net Model: Actual vs Predicted Salary"
+
+from sklearn.metrics import mean_squared_error
+from plotnine import ggplot, aes, geom_point, geom_abline, labs, theme_minimal, theme, element_text
+
+
+
+final_model = Pipeline([
+    ("preprocessing", ct),
+    ("elastic_net", ElasticNet(alpha=1.0, l1_ratio=0.4, max_iter=10000))
+])
+
+# Fit model on full dataset
+final_model.fit(X, y)
+
+# Predict on full dataset
+y_pred = final_model.predict(X)
+
+# Compute MSE
+final_mse = mean_squared_error(y, y_pred)
+print(f"Final Model MSE: {final_mse:.3f}")
+
+# Create DataFrame for plotting
+plot_df = pd.DataFrame({
+    "Actual": y,
+    "Predicted": y_pred
+})
+
+# ggplot visualization
+(
+    ggplot(plot_df, aes(x="Actual", y="Predicted"))
+    + geom_point(alpha=0.6, color="cornflowerblue")
+    + geom_abline(intercept=0, slope=1, color="red", linetype="dashed", size=1)
+    + labs(
+        title="Final Elastic Net Model: Actual vs Predicted Salary",
+        x="Actual Salary",
+        y="Predicted Salary"
+    )
+    + theme_minimal()
+    + theme(
+        figure_size=(6, 6),
+        plot_title=element_text(size=13, weight="bold"),
+        axis_title=element_text(size=11)
+    )
+)
+
+```
+
+**Final Model Results Summary**  
+The final Elastic Net model, using an alpha of 1.0 and an l1_ratio of 0.4, was fitted on the full dataset to predict player salaries. The resulting Mean Squared Error (MSE) was 108,208.76, indicating the model achieved the best overall predictive performance among the regression methods tested.
+
+The Actual vs. Predicted Salary plot shows that most points cluster closely around the red dashed 45-degree line, suggesting the model effectively captures the relationship between player characteristics and salary. However, there are some deviations at higher salary levels, indicating that while the model performs well overall, it tends to underpredict extreme salary values.
+
+This result reinforces the advantage of the Elastic Net approach, which combines the strengths of both Ridge and LASSO regularization; balancing bias reduction with variable selection to produce a stable and interpretable model.

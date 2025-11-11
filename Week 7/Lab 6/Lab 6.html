@@ -2202,12 +2202,12 @@ vertical-align: -.125em;
 
 <section id="repository-link" class="level3">
 <h3 class="anchored" data-anchor-id="repository-link">Repository Link</h3>
-<p>You can view the full project repository on <a href>Github</a></p>
+<p>You can view the full project repository on <a href="https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%207/Lab%206">Github</a></p>
 <p><strong>Note: Since the “Salary” variable represents annual salary in thousands of dollars, all numerical results and model coefficients in this report are interpreted in the same units (thousands of dollars).</strong></p>
 </section>
 <section id="part-0-data-cleaning" class="level3">
 <h3 class="anchored" data-anchor-id="part-0-data-cleaning">Part 0: Data Cleaning</h3>
-<div id="20764cd7" class="cell" data-execution_count="1">
+<div id="f418e661" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -2250,7 +2250,7 @@ None</code></pre>
 </div>
 </div>
 <p>Since some records have missing values for Salary, we cannot use them for prediction, so we remove them from the data frame. We are still left with a large number of records so this is okay.</p>
-<div id="2a9e138e" class="cell" data-execution_count="2">
+<div id="ca9ea4d1" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>hitters <span class="op">=</span> df.dropna(subset <span class="op">=</span> [<span class="st">&quot;Salary&quot;</span>])</span>
@@ -2287,7 +2287,7 @@ dtypes: float64(1), int64(16), object(3)
 memory usage: 43.1+ KB
 None</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="301">
+<div class="cell-output cell-output-display" data-execution_count="319">
 <div>
 
 
@@ -2439,7 +2439,7 @@ None</code></pre>
 </div>
 </div>
 </div>
-<div id="b3f9a0c2" class="cell" data-execution_count="3">
+<div id="f077aeed" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -2452,7 +2452,7 @@ None</code></pre>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> r2_score</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="de6419c3" class="cell" data-execution_count="4">
+<div id="cd9f8978" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> hitters.drop([<span class="st">&quot;Salary&quot;</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
@@ -2473,7 +2473,7 @@ None</code></pre>
 <span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>ct.fit(X)</span>
 <span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>ct.transform(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="303">
+<div class="cell-output cell-output-display" data-execution_count="321">
 <div>
 
 
@@ -2781,7 +2781,7 @@ None</code></pre>
 <h3 class="anchored" data-anchor-id="part-i-different-model-specs">Part I: Different Model Specs</h3>
 <section id="part-a-regression-without-regularization" class="level4">
 <h4 class="anchored" data-anchor-id="part-a-regression-without-regularization">Part A: Regression Without Regularization</h4>
-<div id="e4e5da60" class="cell" data-execution_count="5">
+<div id="1794daf9" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>lr_pipeline <span class="op">=</span> Pipeline(</span>
@@ -2809,7 +2809,7 @@ None</code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code>Intercept: 537.9273144423057</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="304">
+<div class="cell-output cell-output-display" data-execution_count="322">
 <div>
 
 
@@ -2956,7 +2956,7 @@ None</code></pre>
 <br><b>5. At-Bats (<code>standardize__AtBat</code> = -291.1):</b> Similarly, players with more at-bats during the 1986 season tend to have lower predicted salaries, after controlling for performance measures like hits and RBIs.<br>
  This could suggest that simply having more opportunities to bat doesn’t necessarily translate to higher<br>
  pay; it’s the quality of performance (Hits, RBIs) rather than quantity of appearances that matters.</p>
-<div id="b5b23b08" class="cell" data-execution_count="6">
+<div id="bfc9fd25" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
@@ -2987,7 +2987,7 @@ Expected MSE for predicted 1989 Salaries: 121136.310</code></pre>
 </section>
 <section id="part-b-ridge-regression" class="level4">
 <h4 class="anchored" data-anchor-id="part-b-ridge-regression">Part B: Ridge Regression</h4>
-<div id="afacc4b2" class="cell" data-execution_count="7">
+<div id="880ec67e" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> GridSearchCV</span>
@@ -3188,7 +3188,7 @@ Intercept: 537.856</code></pre>
 </section>
 <section id="part-c-lasso-regression" class="level4">
 <h4 class="anchored" data-anchor-id="part-c-lasso-regression">Part C: Lasso Regression</h4>
-<div id="6fac7e46" class="cell" data-execution_count="8">
+<div id="64ee4d29" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">&quot;display.float_format&quot;</span>, <span class="st">&quot;</span><span class="sc">{:.3f}</span><span class="st">&quot;</span>.<span class="bu">format</span>)</span>
@@ -3397,7 +3397,7 @@ Lasso applies L1 regularization, which not only shrinks coefficients but can set
 </section>
 <section id="part-d-elastic-net" class="level4">
 <h4 class="anchored" data-anchor-id="part-d-elastic-net">Part D: Elastic-Net</h4>
-<div id="a7da4f13" class="cell" data-execution_count="9">
+<div id="b84df56e" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
@@ -3628,7 +3628,7 @@ Intercept: 537.8437436091397</code></pre>
  - Division (represented by Division_E and Division_W)</li>
 </ul>
 <p><strong>Linear Regression Model Feature Sets</strong></p>
-<div id="55927603" class="cell" data-execution_count="10">
+<div id="e489cc89" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Single best numeric variable</span></span>
@@ -3673,7 +3673,7 @@ Linear Regression (Best Numeric Vars. + Interactions with Division) Expected MSE
 </div>
 </div>
 <p><strong>Ridge Regression Model Feature Sets</strong></p>
-<div id="51bb1816" class="cell" data-execution_count="11">
+<div id="e8586711" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>alphas <span class="op">=</span> {<span class="st">&quot;ridge_regression__alpha&quot;</span>: np.array([<span class="dv">100</span>, <span class="dv">10</span>, <span class="dv">1</span>, <span class="fl">0.1</span>, <span class="fl">0.01</span>, <span class="fl">0.001</span>])}</span>
@@ -3760,7 +3760,7 @@ Ridge Regression Comparison:</code></pre>
 </div>
 <p><br></p>
 <p><strong>Lasso Regression Model Feature Sets</strong></p>
-<div id="6a239596" class="cell" data-execution_count="12">
+<div id="6246ce84" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>alphas <span class="op">=</span> {<span class="st">&quot;lasso_regression__alpha&quot;</span>: np.array([<span class="dv">100</span>, <span class="dv">10</span>, <span class="dv">1</span>, <span class="fl">0.1</span>, <span class="fl">0.01</span>, <span class="fl">0.001</span>])}</span>
@@ -3847,7 +3847,7 @@ Lasso Regression Comparison:</code></pre>
 </div>
 <p><br></p>
 <p><strong>Elastic Net Model Feature Sets</strong></p>
-<div id="77b0e25c" class="cell" data-execution_count="13">
+<div id="6d134d1c" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>param_grid <span class="op">=</span> {</span>
@@ -3943,7 +3943,7 @@ Elastic Net Regression Comparison:</code></pre>
 </div>
 </div>
 </div>
-<div id="6e7aae20" class="cell" data-execution_count="14">
+<div id="78a4cc67" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -4048,7 +4048,7 @@ Based on the validation MSE results, the Elastic Net regression model using the 
 <h3 class="anchored" data-anchor-id="part-3-discussion">Part 3: Discussion</h3>
 <section id="part-3a---comparing-ridge-models-with-ordinary-regression-models" class="level4">
 <h4 class="anchored" data-anchor-id="part-3a---comparing-ridge-models-with-ordinary-regression-models">Part 3A - Comparing Ridge Models With Ordinary Regression Models</h4>
-<div id="fd5b19d7" class="cell" data-execution_count="15">
+<div id="2c4ac2a2" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define Ridge alphas to match earlier best values</span></span>
@@ -4270,7 +4270,7 @@ When comparing the Ridge regression models to the corresponding ordinary least s
 </section>
 <section id="part-3b---comparing-lasso-model-from-part-1-with-lasso-models-created-from-feature-sets-in-part-2" class="level4">
 <h4 class="anchored" data-anchor-id="part-3b---comparing-lasso-model-from-part-1-with-lasso-models-created-from-feature-sets-in-part-2">Part 3b - Comparing Lasso Model From Part 1 With Lasso Models created from Feature Sets in Part 2</h4>
-<div id="b5b0be94" class="cell" data-execution_count="16">
+<div id="d88262cd" class="cell" data-execution_count="16">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -4347,7 +4347,7 @@ Comparing the LASSO model from Part 1 to the three LASSO models created in Part 
 </section>
 <section id="part-3c---comparing-the-mses-for-the-elastic-net-models-with-those-of-the-ridge-and-lasso-models" class="level4">
 <h4 class="anchored" data-anchor-id="part-3c---comparing-the-mses-for-the-elastic-net-models-with-those-of-the-ridge-and-lasso-models">Part 3C - Comparing The MSE’s for the Elastic Net Models with those of the Ridge and Lasso Models</h4>
-<div id="6b134d5e" class="cell" data-execution_count="17">
+<div id="bbabd8b6" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create MSE comparison table for all feature sets</span></span>
@@ -4418,7 +4418,7 @@ When comparing the MSEs across Ridge, Lasso, and Elastic Net models, the Elastic
 </section>
 <section id="part-4-final-model" class="level3">
 <h3 class="anchored" data-anchor-id="part-4-final-model">Part 4: Final Model</h3>
-<div id="193bd346" class="cell" data-execution_count="18">
+<div id="8da1586f" class="cell" data-execution_count="18">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> mean_squared_error</span>

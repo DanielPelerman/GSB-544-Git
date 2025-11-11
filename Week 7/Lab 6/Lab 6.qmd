@@ -6,7 +6,7 @@ format:
 ---
 
 ### Repository Link 
-You can view the full project repository on [Github]()
+You can view the full project repository on [Github](https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%207/Lab%206)
 
 
 **Note: Since the “Salary” variable represents annual salary in thousands of dollars, all numerical results and model coefficients in this report are interpreted in the same units (thousands of dollars).**

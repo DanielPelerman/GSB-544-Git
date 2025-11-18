@@ -1,0 +1,1094 @@
+---
+title: "Lab 7"
+format:
+  html:
+    embed-resources: true
+---
+
+### Repository Link 
+You can view the full project repository on [Github]()
+
+### Part 0: Data Cleaning and Summary
+
+```{python}
+#| echo: true
+#| code-fold: true
+import pandas as pd
+import numpy as np
+
+# Load data
+df = pd.read_csv("https://www.dropbox.com/s/aohbr6yb9ifmc8w/heart_attack.csv?dl=1")
+
+# Basic info
+print("Shape:", df.shape)
+print("\nData Types:")
+print(df.dtypes)
+
+# First few rows
+print("\nHead:")
+print(df.head())
+
+# Summary statistics
+print("\nSummary Statistics:")
+print(df.describe(include="all"))
+
+print("\nTarget distribution:")
+print(df["output"].value_counts())
+
+print("\nTarget distribution (proportions):")
+print(df["output"].value_counts(normalize=True))
+
+```
+
+**Data Summary:**  
+The dataset contains 273 observations and 8 variables describing patient demographics and clinical measurements related to heart disease risk. All variables are numeric, and there are no missing values, which makes the dataset clean and ready for modeling. Patients in the sample range in `age` from 29 to 77, with an average age of about 54 years. The `sex` variable is coded 1 for male and 0 for female, and the mean of 0.67 indicates that roughly two-thirds of the sample is male. Chest pain type (`cp`) ranges from 0 to 3, where:  
+
+ - 0 = asymptotic  
+ - 1 = typical angina  
+ - 2 = atypical angina  
+ - 3 = non-anginal pain  
+
+The mean `cp` value of 0.97 indicates that typical angina (value 1) is the most commonly reported chest-pain type in the dataset, with a substantial number of patients also being asymptomatic. The distribution is concentrated in the lower categories (0 and 1), rather than in atypical angina (2) or non-anginal pain (3). Resting blood pressure (`trtbps`) averages 132 mm Hg, while cholesterol values (`chol`) range widely from 126 to 564, indicating substantial variability across patients. The maximum heart rate achieved (`thalach`) also varies considerably, with values from 71 to 202 beats per minute.
+
+The target variable (`output`) is roughly balanced, with 146 patients (53%) labeled at risk of a heart attack (1) and 127 patients (47%) labeled not at risk (0). This near-even split ensures that classification models will not be biased by class imbalance. Overall, the dataset provides a diverse set of clinical predictors, each with meaningful variation, making it well-suited for exploring multiple modeling techniques such as KNN, logistic regression, and decision trees.
+
+```{python}
+#| echo: true
+#| code-fold: true
+from plotnine import ggplot, aes, geom_histogram, labs, theme_minimal
+
+(
+    ggplot(df, aes(x='age'))
+    + geom_histogram(bins=15, fill="#4C72B0", color="white")
+    + labs(
+        title='Distribution of Age',
+        x='Age',
+        y='Count'
+    )
+    + theme_minimal()
+)
+
+
+```
+
+**Interpretation:**  
+The `age` distribution of patients shows that most individuals in the dataset are between 45 and 65 years old, with the highest concentration occurring in the late 50s to early 60s. Very few patients are younger than 35 or older than 70, indicating that the sample is primarily composed of middle-aged and older adults. This pattern is consistent with the fact that cardiovascular issues and chest-pain symptoms are more common in these age groups. The distribution is slightly right-skewed, with a small number of older patients, but overall it appears relatively balanced without extreme outliers.
+
+```{python}
+#| echo: true
+#| code-fold: true
+from plotnine import ggplot, aes, geom_tile, scale_fill_gradient2, labs, theme_minimal
+
+corr = df.corr(numeric_only=True).reset_index().melt(id_vars='index')
+corr.columns = ['Var1', 'Var2', 'Correlation']
+
+(
+    ggplot(corr, aes('Var1', 'Var2', fill='Correlation'))
+    + geom_tile()
+    + scale_fill_gradient2(low='blue', mid='white', high='red')
+    + labs(
+        title='Correlation Heatmap',
+        x='',
+        y=''
+    )
+    + theme_minimal()
+)
+
+```
+
+**Interpretation:**  
+The correlation heatmap highlights several meaningful relationships among the clinical variables. Chest pain type (`cp`) shows one of the strongest positive correlations with the target variable (`output`), indicating that patients experiencing typical or atypical angina are more likely to be classified as at risk of a heart attack. Maximum heart rate achieved (`thalach`) exhibits a negative correlation with the target, suggesting that individuals with higher exercise heart rates tend to be lower risk; consistent with general cardiovascular health patterns.
+
+`Age` is moderately negatively correlated with thalach, reflecting the expected decline in maximum heart rate with age. Cholesterol (`chol`) shows weak relationships with most variables, including the target, indicating it may not be a strong standalone predictor in this sample. Resting blood pressure (`trtbps`) also demonstrates weak correlations across the board, suggesting limited linear association with heart attack risk. Overall, the heatmap reveals that `cp` and `thalach` are among the most informative predictors for distinguishing between risk groups, while `age` and `sex` show moderate but notable relationships.
+
+### Part 1: Fitting Models
+
+**KNN Model:**
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# finding best knn model
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, PolynomialFeatures
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import roc_auc_score
+import pandas as pd
+import numpy as np
+
+X = df.drop(columns=["output"])
+y = df["output"]
+
+pipelines = {
+    "KNN_Standard_Euclidean": Pipeline([
+        ("scaler", StandardScaler()),
+        ("knn", KNeighborsClassifier(metric="euclidean"))
+    ]),
+    
+    "KNN_MinMax_Euclidean": Pipeline([
+        ("scaler", MinMaxScaler()),
+        ("knn", KNeighborsClassifier(metric="euclidean"))
+    ]),
+
+    "KNN_MinMax_Manhattan": Pipeline([
+        ("scaler", MinMaxScaler()),
+        ("knn", KNeighborsClassifier(metric="manhattan"))
+    ]),
+    
+    "KNN_Standard_Manhattan": Pipeline([
+        ("scaler", StandardScaler()),
+        ("knn", KNeighborsClassifier(metric="manhattan"))
+    ]),
+    
+    "KNN_Interactions": Pipeline([
+        ("poly", PolynomialFeatures(degree=2, include_bias=False)),
+        ("scaler", StandardScaler()),
+        ("knn", KNeighborsClassifier(metric="euclidean"))
+    ]),
+
+    "KNN_Interactions_Manhattan": Pipeline([
+        ("poly", PolynomialFeatures(degree=4, include_bias=False)),
+        ("scaler", StandardScaler()),
+        ("knn", KNeighborsClassifier(metric="manhattan"))
+    ])
+}
+
+param_grid = {
+    "knn__n_neighbors": range(1, 60)
+}
+
+results = []
+
+for name, pipe in pipelines.items():
+    gs = GridSearchCV(
+        pipe,
+        param_grid,
+        cv=5,
+        scoring="roc_auc"
+    )
+    gs.fit(X, y)
+    
+    results.append({
+        "Pipeline": name,
+        "Best k": gs.best_params_["knn__n_neighbors"],
+        "Best ROC AUC": round(gs.best_score_, 4)
+    })
+
+results_df = pd.DataFrame(results).sort_values("Best ROC AUC", ascending=False)
+print(results_df.to_string(index=False))
+
+```
+```{python}
+#| echo: true
+#| code-fold: true
+
+# using the best Knn model
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import confusion_matrix
+from IPython.display import HTML, display
+
+
+# first define X and y
+X = df.drop(columns=["output"])
+y = df["output"]
+
+# next build pipeline
+knn_pipe = Pipeline([
+    ("scaler", StandardScaler()),
+    ("knn", KNeighborsClassifier(metric="manhattan"))
+])
+
+param_grid = {
+    "knn__n_neighbors": range(1, 100)
+}
+
+# grid search with cross validation
+knn_gs = GridSearchCV(
+    knn_pipe,
+    param_grid,
+    cv=5,
+    scoring="roc_auc"
+)
+
+knn_gs.fit(X, y)
+
+# Best k and cross validated ROC AUC score
+print("Best k:", knn_gs.best_params_["knn__n_neighbors"])
+print("Best CV ROC AUC:", round(knn_gs.best_score_, 3))
+
+
+best_knn = knn_gs.best_estimator_
+
+y_pred = best_knn.predict(X)
+
+display(HTML("<u>Confusion Matrix:</u>"))
+print(confusion_matrix(y, y_pred))
+
+```
+
+<u>Interpretation:</u>  
+
+To identify the strongest K-Nearest Neighbors model, several different preprocessing and distance-metric pipelines were evaluated. These included combinations of StandardScaler vs. MinMaxScaler, Euclidean vs. Manhattan distance, and a pipeline incorporating interaction features. Each pipeline was tuned using a grid search over k and evaluated with 5-fold cross-validated ROC AUC.
+
+Across all six tested pipelines, the StandardScaler + Manhattan distance model consistently achieved the highest ROC AUC. This pipeline also selected a relatively large value of k = 53, indicating that predictions reflect the majority class among the 53 closest patients. A large k suggests smoother decision boundaries and reduced sensitivity to noise, implying that smaller k values were likely overfitting during cross-validation.
+
+**Why This Pipeline Performed Best**  
+
+* StandardScaler ensures all features contribute equally to distance computations by placing them on the same scale. This prevents variables like cholesterol or heart rate from dominating the distance metric.
+* Manhattan distance is often more robust than Euclidean when features contain meaningful absolute differences or when data are less spherical. In this dataset, the Manhattan distance metric likely aligned better with the real clinical structure of patient similarity.
+* The winning pipeline produced the strongest discrimination between high-risk and low-risk patients, as reflected by the ROC AUC.
+
+**How Other Pipelines Compared**
+
+* MinMax scaling + Manhattan/Euclidean also performed well, but slightly below StandardScaler. MinMax scaling can make models more sensitive to outliers, which may have reduced performance.
+* Euclidean distance pipelines were competitive but consistently a few thousandths below Manhattan, indicating the Euclidean distance metric may not capture patient-to-patient similarity as effectively in this dataset.
+* Interaction-feature pipelines performed slightly worse overall. Although interactions can reveal non-linear relationships, they also increase feature dimensionality and noise, which can degrade distance-based methods like KNN.
+* Overall, all pipelines showed solid performance, but none exceeded StandardScaler + Manhattan, confirming it provided the best balance of stability and discriminative ability.
+
+**Final Model Performance**
+
+The final KNN model, StandardScaler + Manhattan distance with k = 53, achieved a cross-validated ROC AUC of 0.857, indicating strong ability to rank patients by heart-attack risk. The confusion matrix (evaluated on the full dataset) also shows a good balance between identifying high-risk patients and minimizing incorrect classifications.
+
+Although KNN does not provide coefficients or feature importance values, the final model demonstrated competitive predictive performance relative to logistic regression and the decision tree, and it responded meaningfully to careful pipeline selection.
+
+After testing a range of preprocessing and modeling choices, the StandardScaler + Manhattan distance pipeline clearly emerged as the most stable and effective KNN configuration for this dataset.
+ 
+
+**Logistic Model:**
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# finding the best pipeline
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
+# Suppress only convergence warnings (recommended)
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
+
+# Optional: Suppress all warnings (use only if needed)
+# warnings.filterwarnings("ignore")
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
+import pandas as pd
+import numpy as np
+
+pipelines = []
+pipeline_names = []
+
+# Ridge Logistic Regression (L2)
+ridge_pipe = Pipeline([
+    ("ridge_regression", LogisticRegression(
+        penalty="l2",
+        solver="liblinear",
+        max_iter=5000
+    ))
+])
+
+ridge_params = {
+    "ridge_regression__C": np.logspace(-4, 4, 20)
+}
+
+pipelines.append((ridge_pipe, ridge_params))
+pipeline_names.append("Ridge_Logistic")
+
+# Lasso Logistic Regression (L1)
+lasso_pipe = Pipeline([
+    ("lasso_regression", LogisticRegression(
+        penalty="l1",
+        solver="liblinear",
+        max_iter=5000
+    ))
+])
+
+lasso_params = {
+    "lasso_regression__C": np.logspace(-4, 4, 20)
+}
+
+pipelines.append((lasso_pipe, lasso_params))
+pipeline_names.append("Lasso_Logistic")
+
+# Elastic Net Logistic Regression
+elastic_pipe = Pipeline([
+    ("elastic_regression", LogisticRegression(
+        penalty="elasticnet",
+        solver="saga",
+        max_iter=5000,
+        l1_ratio=0.5
+    ))
+])
+
+elastic_params = {
+    "elastic_regression__C": np.logspace(-4, 4, 20),
+    "elastic_regression__l1_ratio": [0.1, 0.3, 0.5, 0.7, 0.9]
+}
+
+pipelines.append((elastic_pipe, elastic_params))
+pipeline_names.append("ElasticNet_Logistic")
+
+results = []
+
+for (pipe, params), name in zip(pipelines, pipeline_names):
+    gs = GridSearchCV(
+        pipe,
+        params,
+        scoring="roc_auc",
+        cv=5
+    )
+    gs.fit(X, y)
+
+    results.append({
+        "Pipeline": name,
+        "Best Params": gs.best_params_,
+        "Best ROC AUC": round(gs.best_score_, 3)
+    })
+
+results_df = pd.DataFrame(results)
+print(results_df)
+
+```
+```{python}
+#| echo: true
+#| code-fold: true
+#| message: false
+#| warning: false
+
+
+from sklearn.linear_model import LogisticRegression
+from IPython.display import HTML, display
+
+# LASSO logistic pipeline
+lasso_pipe = Pipeline([
+    ("scaler", StandardScaler()),
+    ("logit", LogisticRegression(
+        penalty="l1",         # <-- LASSO
+        solver="liblinear",   # <-- required for L1
+        max_iter=5000,
+        random_state=321
+    ))
+])
+
+# Tune C = inverse of regularization strength
+param_grid = {
+    "logit__C": np.logspace(-3, 3, 15)
+}
+
+lasso_gs = GridSearchCV(
+    lasso_pipe,
+    param_grid,
+    cv=5,
+    scoring="roc_auc"
+)
+
+lasso_gs.fit(X, y)
+
+print("Best C:", round(lasso_gs.best_params_["logit__C"], 3))
+print("Best CV ROC AUC:", round(lasso_gs.best_score_, 3))
+
+best_lasso = lasso_gs.best_estimator_
+
+y_pred_lasso = best_lasso.predict(X)
+
+display(HTML("<u>Confusion Matrix:</u>"))
+print(confusion_matrix(y, y_pred_lasso))
+
+# Extract coefficients
+lasso_model = best_lasso.named_steps["logit"]
+coefs = lasso_model.coef_[0]
+
+coef_table = pd.DataFrame({
+    "feature": X.columns,
+    "coefficient": coefs,
+    "odds_ratio": np.exp(coefs)
+})
+
+display(HTML("<u>Coefficient Table:</u>"))
+print(coef_table.to_string(index=False))
+
+```
+
+<u>Interpretation:</u>    
+To identify the strongest logistic regression model, three different regularized pipelines were evaluated: Ridge (L2 penalty), Lasso (L1 penalty), and Elastic Net (a mixture of L1 and L2). Each pipeline used standardized predictors and was tuned using a grid search over a range of regularization strengths (C values), with performance evaluated using 5-fold cross-validated ROC AUC.
+
+Across the three pipelines, the Lasso Logistic Regression model achieved the highest ROC AUC (~ 0.859), narrowly outperforming Ridge (~ 0.857) and clearly outperforming Elastic Net (~ 0.818). The best Lasso model selected a regularization strength of C = 1.0, which reflects a moderate degree of L1 shrinkage. Because Lasso applies a penalty that can drive less informative coefficients toward zero, it produces a more focused and potentially more stable model. The fact that Lasso outperformed both Ridge and Elastic Net suggests that isolating the strongest predictors was helpful for this dataset.
+
+<b>Why Lasso Performed Best</b>
+
+- L1 regularization performs feature selection, shrinking weaker predictors toward zero and emphasizing the most informative clinical variables.  
+- This prevents the model from spreading weight across weak or noisy predictors, which can improve discrimination in a medical dataset of this size.  
+- The winning Lasso model captured strong, stable relationships between key predictors and heart-attack risk, leading to the highest cross-validated ROC AUC.  
+
+<b> How the Other Pipelines Compared</b>
+
+- Ridge Regression (L2 penalty) performed almost as well. L2 is useful when many predictors carry signal, but it does not remove weak predictors entirely, which may have slightly reduced its discriminative power.  
+- Elastic Net performed substantially worse. In this dataset, the combination of L1 and L2 may have introduced too much regularization or failed to isolate the strongest predictors as effectively as pure L1 or L2.  
+
+Overall, all three pipelines were viable, but Lasso provided the best balance of regularization strength, stability, and discriminative performance, making it the most effective logistic pipeline for this analysis.
+
+<b>Final Model Performance</b>
+
+The final Lasso logistic regression model (C = 1.0) achieved:
+
+- Cross-validated ROC AUC: ≈ 0.856  
+- Confusion matrix (non-CV predictions): referenced from output  
+- A clear and interpretable coefficient structure that highlights important clinical relationships  
+
+This strong ROC AUC indicates that logistic regression is one of the best models for ranking heart-attack risk, performing comparably to the best KNN pipeline and noticeably better than the decision tree.
+
+<b>Interpretation of Coefficients</b>
+
+Logistic regression provides useful interpretability through coefficients and odds ratios.
+
+- Positive coefficients (odds ratios > 1) indicate features associated with higher predicted risk.
+In this model, chest pain type (`cp`), maximum heart rate (`thalach`), and resting ECG results (`restecg`) fall into this category, meaning higher values increase the predicted probability of being classified as high risk.
+
+- Negative coefficients (odds ratios < 1) indicate an inverse relationship with predicted risk.
+Here, `age`, `sex`, resting blood pressure (`trtbps`), and cholesterol (`chol`) show this inverse pattern. This means that individuals with higher values of these predictors tended to be classified as lower risk within this dataset. This does not imply causal protection; it simply reflects how these variables behaved in this sample.
+
+<b>Overall</b>
+
+Logistic regression provides one of the strongest and most interpretable models in this analysis. Its ability to clearly highlight which clinical predictors are most strongly associated with elevated or reduced risk, combined with its high ROC AUC, makes the Lasso Logistic Regression model one of the most informative and effective approaches for predicting heart-attack risk in this dataset.
+
+
+**Decision Tree:**
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| message: false
+#| warning: false
+
+import warnings
+warnings.filterwarnings("ignore")
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, PolynomialFeatures
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+import pandas as pd
+import numpy as np
+
+
+results = []
+
+
+pipelines = {
+    "DT_Standard_Default": Pipeline([
+        ("scaler", StandardScaler()),
+        ("dt", DecisionTreeClassifier(random_state=321))
+    ]),
+    
+    "DT_Standard_MaxDepth": Pipeline([
+        ("scaler", StandardScaler()),
+        ("dt", DecisionTreeClassifier(random_state=321))
+    ]),
+    
+    "DT_Standard_MinSamples": Pipeline([
+        ("scaler", StandardScaler()),
+        ("dt", DecisionTreeClassifier(random_state=321))
+    ]),
+    
+    "DT_MinMax_Default": Pipeline([
+        ("scaler", MinMaxScaler()),
+        ("dt", DecisionTreeClassifier(random_state=321))
+    ]),
+    
+    "DT_MinMax_MaxDepth": Pipeline([
+        ("scaler", MinMaxScaler()),
+        ("dt", DecisionTreeClassifier(random_state=321))
+    ]),
+    
+    # Interaction model
+    "DT_Interactions": Pipeline([
+        ("interactions", PolynomialFeatures(degree=2, include_bias=False)),
+        ("scaler", StandardScaler()),
+        ("dt", DecisionTreeClassifier(random_state=321))
+    ])
+}
+
+
+param_grids = {
+    "DT_Standard_Default": {
+        "dt__max_depth": [None],
+        "dt__min_samples_split": [2]
+    },
+    "DT_Standard_MaxDepth": {
+        "dt__max_depth": [2, 3, 4, 5, 6, 7, 8, 10]
+    },
+    "DT_Standard_MinSamples": {
+        "dt__min_samples_split": [2, 5, 10, 20, 30]
+    },
+    "DT_MinMax_Default": {
+        "dt__max_depth": [None],
+        "dt__min_samples_split": [2]
+    },
+    "DT_MinMax_MaxDepth": {
+        "dt__max_depth": [2, 3, 4, 5, 6, 7, 8, 10]
+    },
+    "DT_Interactions": {
+        "dt__max_depth": [3, 4, 5, 6],
+        "dt__min_samples_split": [2, 5, 10]
+    }
+}
+
+
+for name, pipe in pipelines.items():
+    
+    gs = GridSearchCV(
+        estimator=pipe,
+        param_grid=param_grids[name],
+        cv=5,
+        scoring="roc_auc"
+    )
+    
+    gs.fit(X, y)
+    
+    results.append({
+        "Pipeline": name,
+        "Best Params": gs.best_params_,
+        "Best ROC AUC": round(gs.best_score_, 4)
+    })
+
+results_df = pd.DataFrame(results)
+
+
+results_df = results_df.sort_values(by="Best ROC AUC", ascending=False)
+
+print(results_df)
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+#| message: false
+#| warning: false
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import confusion_matrix
+from IPython.display import HTML, display
+
+# ----- Best Pipeline: Interactions + Decision Tree -----
+
+tree_pipe = Pipeline([
+    ("interactions", PolynomialFeatures(degree=2, include_bias=False)), 
+    ("tree", DecisionTreeClassifier(random_state=321))
+])
+
+# Use only the hyperparameters used in this pipeline
+param_grid = {
+    "tree__max_depth": [3],              # from pipeline results
+    "tree__min_samples_split": [2]       # from pipeline results
+}
+
+tree_gs = GridSearchCV(
+    tree_pipe,
+    param_grid,
+    cv=5,
+    scoring="roc_auc"
+)
+
+tree_gs.fit(X, y)
+
+# Best params + CV ROC AUC
+print("Best Params:", tree_gs.best_params_)
+print("Best CV ROC AUC:", round(tree_gs.best_score_, 3))
+
+best_tree = tree_gs.best_estimator_
+
+# Predictions
+y_pred_tree = best_tree.predict(X)
+
+display(HTML("<u>Confusion Matrix:</u>"))
+print(confusion_matrix(y, y_pred_tree))
+
+# Feature importances (with interaction-expanded feature names)
+tree_model = best_tree.named_steps["tree"]
+importances = tree_model.feature_importances_
+
+# Build column names for PolynomialFeatures
+poly = best_tree.named_steps["interactions"]
+interaction_feature_names = poly.get_feature_names_out(X.columns)
+
+feat_importance_table = pd.DataFrame({
+    "feature": interaction_feature_names,
+    "importance": importances
+})
+
+# Remove zero-importance features
+feat_importance_table = (
+    feat_importance_table[feat_importance_table["importance"] > 0]
+    .sort_values(by="importance", ascending=False)
+)
+
+
+display(HTML("<u>Feature Importances:</u>"))
+print(feat_importance_table.to_string(index=False))
+
+```
+
+<u>Interpretation:</u>    
+To identify the strongest decision tree model, several different pipelines were evaluated, each varying in preprocessing, maximum depth, minimum samples required to split a node, or whether interaction features were included. In total, six pipelines were tested: a standard tree with default parameters, a MinMax-scaled version, versions tuned for max depth, versions tuned for minimum samples per split, and finally a pipeline incorporating interaction features. Each pipeline was tuned using a grid search and evaluated using 5-fold cross-validated ROC AUC.
+
+Across all pipelines, the interaction-feature pipeline achieved the highest performance, with a cross-validated ROC AUC of approximately 0.799. This pipeline used a maximum depth of 3 and a minimum samples split of 2, suggesting that a relatively shallow but flexible tree performed best. Shallow trees tend to generalize more effectively by avoiding overly complex splits that memorize the training data. The strong performance of this pipeline indicates that nonlinear combinations of features captured meaningful patterns in the dataset that a standard tree without interactions could not.
+
+<b>Why the Interaction Tree Performed Best</b>
+
+- Interaction features allow the tree to consider combinations of predictors (for example, `cp` × `thalach`) that may reflect more realistic clinical relationships than single features alone.
+- Decision trees naturally partition the feature space using threshold-based rules; providing them with interaction-expanded features increases the variety of useful splits they can choose from.
+- The best tree depth (3) was shallow enough to prevent overfitting yet deep enough to capture multiple layers of interacting clinical risk factors, which likely led to its stronger discriminative performance.
+- Pipelines without interaction features typically achieved ROC AUC values in the 0.67–0.78 range; solid, but consistently below the interaction-enhanced model.
+
+<b>How Other Pipelines Compared</b>
+
+- Shallow standard trees with default parameters performed the worst, indicating that the untuned structure was not well suited for capturing the complexity of heart-attack risk patterns.
+- Pipelines tuned for maximum depth or MinSamplesSplit performed moderately well (around 0.77), suggesting that structural tuning alone improves performance but is not sufficient.
+- MinMax-scaled versions did not meaningfully improve performance because scaling does not affect tree-based algorithms.
+- Overall, although all pipelines produced valid models, none matched the performance of the interaction-based tree, confirming that feature interactions provided important additional predictive structure.
+
+<b>Final Model Performance</b>
+
+The final selected model was the interaction-based decision tree with:
+
+- max depth = 3
+- min samples split = 2
+- cross-validated ROC AUC = 0.799
+- confusion matrix (non-CV predictions) showing strong separation between positive and negative cases
+
+This result indicates that the tree performs reasonably well at ranking patients by heart-attack risk, although its performance is slightly weaker than the KNN and logistic models.
+
+<b>Interpretation of Feature Importances</b>
+
+Decision trees express interpretability through feature importances, which measure how much each feature contributed to the model’s splitting decisions. Only features with non-zero importance are displayed, since zero-importance features were not used by the tree.
+
+The most important predictors were interaction terms such as `cp` × `thalach` and `age` × `sex`, along with squared or pairwise combinations of other clinical features. The dominant feature was `cp` × `thalach`, contributing over half of the total importance. This indicates that the combination of chest pain type and maximum heart rate was the most influential factor in classifying risk. Other meaningful predictors included `age` × `sex`, `sex` × `trtbps`, and `thrtbps²`, suggesting that nonlinear relationships involving `age`, `sex`, resting blood pressure (`trtbps`), maximum heart rate (`thalach`), and cholesterol (`chol`) helped the model refine its decision boundaries.
+
+These results highlight how the interaction-based pipeline allowed the decision tree to make use of more nuanced clinical relationships that simple individual predictors do not fully capture.
+
+<b>Overall</b>
+
+After testing multiple preprocessing and structural configurations, the interaction-based decision tree emerged as the most effective version for this dataset. While its ROC AUC remains below that of the KNN and logistic regression models, it still provides a reasonably strong classifier and offers clear interpretability through the features it chose for splitting. The use of interaction features was particularly beneficial, enabling the model to capture more complex and clinically realistic patterns of heart-attack risk.
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# plot ROC curves
+
+from sklearn.model_selection import cross_val_predict, KFold
+from sklearn.metrics import roc_curve, auc
+import matplotlib.pyplot as plt
+
+# Define reproducible CV splitter
+cv_splitter = KFold(n_splits=5, shuffle=True, random_state=321)
+
+# Cross-validated predicted probabilities
+knn_proba = cross_val_predict(best_knn, X, y, cv=cv_splitter, method="predict_proba")[:, 1]
+logit_proba = cross_val_predict(best_lasso, X, y, cv=cv_splitter, method="predict_proba")[:, 1]
+dt_proba = cross_val_predict(best_tree, X, y, cv=cv_splitter, method="predict_proba")[:, 1]
+
+# Compute ROC values + AUC
+fpr_knn, tpr_knn, _ = roc_curve(y, knn_proba)
+auc_knn = auc(fpr_knn, tpr_knn)
+
+fpr_logit, tpr_logit, _ = roc_curve(y, logit_proba)
+auc_logit = auc(fpr_logit, tpr_logit)
+
+fpr_dt, tpr_dt, _ = roc_curve(y, dt_proba)
+auc_dt = auc(fpr_dt, tpr_dt)
+
+# Plot curves
+plt.figure(figsize=(10, 7))
+
+plt.plot(fpr_knn, tpr_knn, label=f"KNN (AUC = {auc_knn:.3f})")
+plt.plot(fpr_logit, tpr_logit, label=f"Logistic Regression (AUC = {auc_logit:.3f})")
+plt.plot(fpr_dt, tpr_dt, label=f"Decision Tree (AUC = {auc_dt:.3f})")
+
+plt.plot([0, 1], [0, 1], 'k--', label="Random Guess")
+
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("Cross-Validated ROC Curves for KNN, Logistic Regression, and Decision Tree")
+plt.legend(loc="lower right")
+plt.grid(alpha=0.3)
+plt.show()
+
+```
+
+<u>Interpretation:</u>    
+The cross-validated ROC curves for the three final models, KNN, Lasso Logistic Regression, and the Decision Tree, show very similar performance patterns to those obtained earlier, with small expected numerical differences. In this plot, KNN achieves the highest AUC (~ 0.850), followed closely by Lasso Logistic Regression (~ 0.844), while the Decision Tree trails behind with an AUC of ~ 0.786.
+
+Both the KNN and Logistic Regression curves lie well above the diagonal reference line, indicating strong discriminative ability in separating patients at risk of a heart attack from those not at risk. Their curves are close to one another, reflecting very similar predictive performance. The Decision Tree’s ROC curve is lower and more irregular, consistent with its lower overall AUC and its tendency to overfit even when pruned.
+
+It is important to note that these AUC values differ slightly from the earlier cross-validated scores reported by GridSearchCV. GridSearchCV reports the mean AUC across folds, whereas the ROC curves shown here are generated from stacked out-of-fold predictions using cross_val_predict. These two methods compute AUC using fundamentally different procedures:
+
+- GridSearchCV averages the AUC computed separately in each fold.
+- The ROC curves here compute AUC once, using all combined cross-validated predictions.
+
+Because of this, minor numerical differences and even small reversals in ranking (such as KNN appearing slightly ahead of Logistic Regression here) are normal and mathematically expected. They do not indicate a meaningful change in the underlying model performance.
+
+Overall, the results remain fully consistent with earlier findings:
+Logistic Regression and KNN offer very similar, strong discriminative performance, while the Decision Tree performs noticeably worse. The two top models differ only marginally across evaluation methods, reaffirming that both are reliable and effective predictors of heart-attack risk within this dataset.
+
+
+### Part 2: Metrics  
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+
+# creating a function for greater effiecency 
+
+def compute_metrics(model, model_name):
+    # cross-validated predictions
+    y_pred_cv = cross_val_predict(model, X, y, cv=5, method="predict")
+
+    # confusion matrix
+    tn, fp, fn, tp = confusion_matrix(y, y_pred_cv).ravel()
+
+    # metrics
+    tpr = tp / (tp + fn)          # recall / sensitivity
+    precision = tp / (tp + fp)    # positive predictive value
+    tnr = tn / (tn + fp)          # specificity
+
+    display(HTML(f"<b>{model_name} Metrics (Cross-Validated)</b>"))
+    print("TPR (Recall / Sensitivity):", round(tpr, 3))
+    print("Precision:", round(precision, 3))
+    print("TNR (Specificity):", round(tnr, 3))
+
+    return
+
+
+#  Compute for all three tuned models 
+
+compute_metrics(best_knn, "KNN")
+compute_metrics(best_lasso, "Logistic Regression")
+compute_metrics(best_tree, "Decision Tree")
+
+```
+
+<u>Interpretation:</u>  
+The cross-validated metrics provide a more realistic estimate of how each model is expected to perform on unseen data. These values differ slightly from the confusion matrices shown in Part 1, which is expected, because the earlier matrices reflect in-sample predictions, while the metrics below reflect true out-of-sample generalization performance.
+
+<b>KNN Model</b>
+
+<u>True Positive Rate</u> (Recall/Sensitivity = 0.801)  
+KNN shows strong sensitivity, identifying about 80% of true heart-disease cases. This makes it effective at minimizing false negatives and ensuring that high-risk patients are flagged.
+
+<u>Precision</u> = 0.796  
+When KNN predicts that a patient is high-risk, it is correct about 80% of the time. This precision is slightly lower than the earlier in-sample estimate, reflecting the tougher cross-validated evaluation.
+
+<u>True Negative Rate</u> (Specificity = 0.764)  
+KNN correctly identifies about 76% of non-disease cases, giving it well-balanced performance across both classes.
+
+<u>Summary:</u>  
+KNN provides strong recall and solid precision and specificity, making it a consistently high-performing model under cross-validation.
+
+<b>Logistic Regression</b>
+
+<u>True Positive Rate</u> (Recall/Sensitivity = 0.808)  
+Logistic Regression has the highest sensitivity among the three models, successfully identifying more than 80% of true positive cases. This makes it a strong detector of at-risk patients.
+
+<u>Precision</u> = 0.792  
+Logistic Regression correctly predicts high-risk patients nearly 79% of the time. This is slightly lower than KNN’s precision but still very strong, indicating dependable predictions.
+
+<u>True Negative Rate</u> (Specificity = 0.756)  
+It correctly identifies about 76% of non-disease cases. This balanced specificity helps the model avoid excessive false alarms.
+
+<u>Summary</u>:  
+Logistic Regression offers the best overall balance between recall, precision, and specificity, making it a reliable and stable model for this classification task.
+
+<b>Decision Tree</b>
+
+<u>True Positive Rate</u> (Recall/Sensitivity = 0.795)  
+The Decision Tree identifies about 80% of true positives, slightly below the other models but still respectable. However, it misses more actual disease cases relative to KNN and Logistic Regression.
+
+<u>Precision</u> = 0.748  
+The Decision Tree achieves lower precision, correctly predicting high risk about 75% of the time. This reflects a higher rate of false positives compared to the other two models.
+
+<u>True Negative Rate</u> (Specificity = 0.693)  
+The Decision Tree has the lowest specificity, correctly identifying about 69% of non-disease cases. This means it misclassifies more healthy individuals as high-risk compared with the other models.
+
+<u>Summary</u>:  
+The Decision Tree performs reasonably well in recall but falls behind in both precision and specificity. It is more prone to misclassifying healthy patients as high-risk.
+
+<b>Overall Comparison</b>  
+
+- KNN provides strong performance across all metrics, with especially solid specificity and precision.
+- Lasso Logistic Regression achieves the most balanced results, with the highest recall and competitive precision and specificity.
+- The Decision Tree performs the weakest overall, with lower specificity and precision relative to the other models.
+
+<b>Error Tradeoffs in Model Selection:</b>    
+When choosing a preferred model, it is important to consider which type of error is more costly in a clinical context.
+
+<u>False Negatives</u> <i>(missed disease)</i>  
+These occur when the model predicts a patient is not at risk when they actually are.
+In medical settings, this is usually the most serious error because it delays diagnosis and treatment.
+
+<u>False Positives</u> <i>(false alarms)</i>  
+These occur when the model predicts a patient is at risk when they are actually healthy.
+This may lead to unnecessary follow-up tests, extra monitoring, or temporary stress, but is usually less dangerous than missing a true case.
+
+<b>Which Model to Choose?</b>  
+Because of this tradeoff:
+
+If the priority is catching as many true heart-disease cases as possible, models with higher recall, like KNN or Lasso Logistic Regression, are generally preferred. These models minimize the chance of missing a high-risk patient.
+
+If the priority is reducing false alarms and avoiding unnecessary follow-up testing, then a model with higher specificity may be more suitable. However, in this analysis, neither model exceeds KNN or Logistic Regression in specificity enough to justify the tradeoff, so the Decision Tree is generally less preferred. 
+
+
+### Part 3: Discussion
+
+#### Q1
+<b>Which metric(s) you would use for model selection and why:</b>  
+In this scenario, the hospital faces severe legal and ethical consequences if a patient is <b>incorrectly labeled as “low risk”</b> and later suffers a heart attack. This means the cost of false negatives is extremely high. Therefore, the most important metric for model selection is:
+
+- <b>Recall</b> (<i>Sensitivity / True Positive Rate</i>)
+
+Because recall measures the proportion of actual high-risk patients correctly identified, a high recall minimizes the chance of missing a true heart-attack-risk patient. False positives are far less harmful in this setting, so precision and specificity are secondary.
+
+<b>Which final model I would recommend and why:</b>  
+Based on the cross-validated results, Logistic Regression (Lasso) achieved the highest recall (~ 0.808), narrowly outperforming KNN (~ 0.801) and the Decision Tree (~ 0.795). Logistic Regression also demonstrated stable precision and specificity, making it the safest and most reliable option for reducing false negatives.
+
+Therefore, I would recommend the <b>Lasso Logistic Regression</b> model because it provides the best protection against the hospital’s most dangerous error: failing to detect a truly high-risk patient.
+
+<b>Expected score for future predictions:</b>    
+Using cross-validated estimates as the best indicator of future performance, the hospital should expect:
+
+- <b>Recall ~ 0.81</b> (<i>meaning the model will correctly identify about 81% of true high-risk patients</i>)
+
+This aligns with the hospital’s priority of maximizing detection of genuine heart-attack-risk cases.
+
+#### Q2  
+<b>Which metric(s) you would use for model selection and why:</b>  
+In this scenario, the hospital is overfull and must reserve limited bed space for patients who truly require monitoring. The key concern is avoiding unnecessary admissions. Therefore, the most important metric for model selection is:
+
+- <b>True Negative Rate</b> (<i>Specificity</i>)
+
+Specificity measures the proportion of low-risk patients who are correctly identified as low risk. A high specificity minimizes false positives, preventing healthy patients from being incorrectly admitted. Precision is also relevant, but specificity directly reflects the hospital’s priority: reducing the number of patients incorrectly labeled as high-risk.
+
+<b>Which final model I would recommend and why:</b>  
+Among the three tuned models, KNN achieved the highest specificity (~ 0.764), slightly outperforming Logistic Regression (~ 0.756) and the Decision Tree (~ 0.693). Because the goal in this scenario is to minimize false positives and avoid admitting patients who are actually low risk, the KNN model provides the best alignment with the hospital’s operational needs.
+
+Therefore, I would recommend the <b>KNN model</b>, as it most effectively identifies low-risk individuals and helps reduce unnecessary use of bed space.
+
+<b>Expected score for future predictions:</b>  
+Using cross-validated metrics as the best indicator of future model behavior, the hospital should expect:  
+
+- <b>Specificity ~ 0.76</b> (<i>meaning the model will correctly identify about 76% of truly low-risk patients</i>)    
+
+This performance supports the hospital’s objective of reducing overcrowding by minimizing false-positive admissions.
+
+#### Q3  
+<b>Which metric(s) you would use for model selection and why:</b>  
+In this scenario, the hospital is studying the <b>root causes of heart attacks</b> and wants to understand which biological measures are associated with heart-attack risk. The goal is not operational accuracy, but <b>interpretability</b> and the ability to clearly identify which predictors contribute most strongly to risk. Therefore, the most appropriate metric for model selection is:  
+
+- <b>Model Interpretability</b> (<i>via Coefficients or Feature Importances</i>)
+
+While traditional metrics such as recall, precision, and specificity are still relevant, the primary objective here is to <b>identify meaningful clinical predictors</b>. This makes <b>interpretability</b> the key criterion. Logistic Regression provides direct coefficients and odds ratios, allowing clear insight into the direction and strength of each predictor’s association with the predicted risk.
+
+<b>Which final model I would recommend and why:</b>  
+The Lasso Logistic Regression model is the strongest option for this scenario. It provides a fully interpretable set of coefficients and automatically performs variable selection by shrinking weak predictors toward zero. In the final model, only meaningful predictors retain non-zero coefficients, making the biological relationships easier to analyze.
+While KNN and Decision Trees make accurate predictions, their interpretability is limited: KNN has no coefficients at all, and Decision Trees become unstable and sensitive to small changes in data. Lasso Logistic Regression avoids these shortcomings and provides clear, stable associations between clinical features and heart-attack risk.
+
+Therefore, I would recommend the <b>Lasso Logistic Regression</b> model because it offers the most transparent and clinically interpretable explanation of which biological measures are associated with increased or decreased risk.
+
+<b>Expected score for future predictions:</b>  
+Because prediction accuracy is not the primary goal in this scenario, the focus is on the model’s ability to reveal meaningful relationships. However, the hospital can still expect solid predictive performance:
+
+- <b>ROC AUC ~ 0.856</b> (<i>indicating strong overall discriminative ability</i>)
+
+This ensures that the model not only provides interpretable insights but also maintains high predictive reliability, supporting both scientific understanding and practical medical relevance.
+
+#### Q4   
+<b>Which metric(s) you would use for model selection and why:</b>  
+In this scenario, the hospital is training a new group of doctors and wants to compare their diagnostic judgments against the algorithm’s predictions. The goal is to <b>use the model as a benchmark</b> for evaluating doctor performance. Because of this, the most important metric is:
+
+- <b>Overall Discriminative Ability</b> (<i>ROC AUC</i>)
+
+ROC AUC provides a single, comprehensive measure of how well the model separates high-risk from low-risk patients across all possible decision thresholds. Since doctors may vary in how conservatively or aggressively they diagnose risk, a threshold-independent metric is ideal for benchmarking their performance. Additional threshold-based measures such as recall, precision, and specificity can still be referenced, but ROC AUC is the most appropriate primary metric for evaluating general diagnostic skill.
+
+<b>Which final model I would recommend and why:</b>  
+For training new doctors, the Lasso Logistic Regression model is the most suitable choice. It not only demonstrated excellent discriminative performance (AUC ~ 0.856) but also provides clear, interpretable explanations for its predictions. The coefficients and odds ratios show exactly how each clinical feature influences predicted heart-attack risk, giving instructors a transparent mechanism for teaching diagnostic reasoning.
+
+While KNN performed similarly well in AUC, it offers no interpretability and provides little educational value. The Decision Tree is interpretable, but its lower performance (AUC ~ 0.786) and tendency to overfit make it an unreliable benchmark.
+
+Therefore, I would recommend the <b>Lasso Logistic Regression</b> model because it provides both strong diagnostic accuracy and clear clinical reasoning that doctors-in-training can learn from.
+
+<b>Expected score for future predictions:</b>  
+Using cross-validated metrics as the best estimate of future performance, the hospital can expect:
+
+- <b>ROC AUC ~ 0.856</b> (<i>indicating that the model reliably distinguishes high vs. low-risk patients</i>)
+
+This level of discriminative accuracy makes the model a strong and credible benchmark for evaluating and training new doctors, helping ensure their diagnostic judgments align with proven clinical patterns.
+
+### Part 4: Validation
+
+<u>Previous Model Performance:</u>
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# Reprint the cross-validated metrics from Part 2
+compute_metrics(best_knn, "KNN")
+compute_metrics(best_lasso, "Logistic Regression")
+compute_metrics(best_tree, "Decision Tree")
+
+```
+
+<u>Model Performance with Validation Dataset:</u>
+
+```{python}
+#| echo: true
+#| code-fold: true
+val = pd.read_csv("https://www.dropbox.com/s/jkwqdiyx6o6oad0/heart_attack_validation.csv?dl=1")
+
+X_val = val.drop(columns=["output"])
+y_val = val["output"]
+
+from sklearn.metrics import confusion_matrix, roc_auc_score, precision_score, recall_score
+
+def validate_model(model, model_name):
+    y_pred = model.predict(X_val)
+    y_proba = model.predict_proba(X_val)[:, 1]
+    
+    # Metrics
+    auc = roc_auc_score(y_val, y_proba)
+    precision = precision_score(y_val, y_pred)
+    recall = recall_score(y_val, y_pred)
+    
+    # Confusion matrix
+    tn, fp, fn, tp = confusion_matrix(y_val, y_pred).ravel()
+    
+    display(HTML(f"<b>{model_name} Validation Performance</b>"))
+    print("Confusion Matrix:")
+    print(confusion_matrix(y_val, y_pred))
+    print("ROC AUC:", round(auc, 3))
+    print("Precision:", round(precision, 3))
+    print("Recall:", round(recall, 3))
+
+validate_model(best_knn, "KNN")
+validate_model(best_lasso, "Lasso Logistic Regression")
+validate_model(best_tree, "Decision Tree")
+```
+
+<b>Validation Interpretation:</b>  
+
+The validation results allow us to check how well each final model generalizes to new, unseen observations. By comparing the validation metrics to the previous cross-validated metrics, we can determine whether the earlier performance estimates were reliable or overly optimistic.
+
+<b>KNN</b>  
+
+The KNN model shows a noticeable shift in performance on the validation data. <u>Recall</u> drops from approximately 0.801 to 0.684, indicating that KNN missed more true high-risk patients than expected. <u>Precision</u> increases substantially (from ~0.796 to ~0.929), meaning that when KNN predicts a patient is high-risk, it is almost always correct—but it makes this improvement by becoming more conservative and classifying fewer patients as high-risk overall.
+The <u>ROC AUC</u> of 0.892 is slightly higher than the cross-validated estimate, suggesting the probability ranking was still strong even though threshold-based classification performance (precision/recall) shifted.
+
+Overall, KNN generalized moderately well in terms of AUC, but its recall dropped more than expected.
+
+<b>Lasso Logistic Regression</b>  
+
+Lasso Logistic Regression performed the most consistently. <u>Recall</u> decreased from approximately 0.808 to 0.789, a small and acceptable change given the small size of the validation set. <u>Precision</u> increased from about 0.792 to 0.882, showing that the model remained stable and continued to classify high-risk patients correctly with strong accuracy.  
+The <u>ROC AUC</u> of 0.919 is slightly higher than the cross-validated value, meaning the model maintained strong ranking performance on new data.
+
+Overall, Lasso Logistic Regression showed the best match between cross-validated estimates and real validation performance, confirming its reliability.  
+
+<b>Decision Tree</b>  
+
+The Decision Tree maintained a similar pattern of strengths and weaknesses. <u>Precision</u> increased (to 0.867), consistent with the tree’s tendency to reduce false positives by making stricter high-risk predictions. <u>Recall</u> dropped from ~0.795 to 0.684, meaning the model missed more high-risk cases than expected.
+Its <u>ROC AUC</u> of 0.840 is close to its earlier estimates, suggesting modest generalizability.
+
+Overall, the Decision Tree continues to trade recall for precision and behaves consistently with its earlier profile.
+
+<b>Summary of Generalization</b>  
+
+Across all three models, the validation results indicate that our cross-validated performance estimates were broadly correct:
+
+- Models with higher recall during cross-validation (KNN and Logistic Regression) still achieved the strongest recall on the validation set.
+- Models with higher precision and specificity during cross-validation (Decision Tree) maintained that behavior.
+- The ROC AUC values were very close to the earlier cross-validated values, confirming that the underlying probability rankings generalized well.
+
+While all models experienced some decline in recall, likely due to the small validation sample, the overall ranking and behavior of the models remained consistent. Lasso Logistic Regression demonstrated the most stable and reliable performance, reinforcing its selection as the preferred model.
+
+### Part 5: Cohen's Kappa
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.metrics import cohen_kappa_score
+
+# Predictions for each model using the Part One models
+y_pred_knn = best_knn.predict(X)
+y_pred_lasso = best_lasso.predict(X)
+y_pred_tree = best_tree.predict(X)
+
+# Cohen's Kappa for each
+kappa_knn = cohen_kappa_score(y, y_pred_knn)
+kappa_lasso = cohen_kappa_score(y, y_pred_lasso)
+kappa_tree = cohen_kappa_score(y, y_pred_tree)
+
+# Print results
+from IPython.display import display, HTML
+
+display(HTML("<b>Cohen's Kappa Scores:</b>"))
+print("KNN:", round(kappa_knn, 3))
+print("Lasso Logistic Regression:", round(kappa_lasso, 3))
+print("Decision Tree:", round(kappa_tree, 3))
+
+```
+
+<b>Interpretation:</b>
+
+Cohen’s Kappa is a classification metric that adjusts for agreement that could happen by chance. Unlike accuracy or precision, which simply measure correct predictions, Cohen’s Kappa evaluates how much better the model performs compared to a classifier that is guessing with the same class distribution.
+
+This makes Kappa especially useful when the classes are imbalanced or when we want a more conservative estimate of model quality.
+
+
+Cohen’s Kappa values typically fall on the following scale:
+
+- **0.01–0.20:** Slight agreement
+- **0.21–0.40:** Fair agreement
+- **0.41–0.60:** Moderate agreement
+- **0.61–0.80:** Substantial agreement
+- **0.81–1.00:** Almost perfect agreement
+
+All three models fall between **0.55 and 0.65**, indicating **moderate to substantial agreement** beyond chance. However, the ranking of the models changes compared to earlier results.
+
+
+<b>KNN</b>  
+With a Kappa of **0.551**, KNN shows moderate agreement beyond chance. This aligns with its good recall performance but slightly lower precision. In terms of overall predictive consistency, KNN performs the worst of the three under this metric.
+
+
+<b>Lasso Logistic Regression</b>  
+Lasso Regression achieves a Kappa of **0.586**, slightly better than KNN. This reflects its balanced performance across recall, precision, and specificity. While not the highest, it remains a stable and reliable model when accounting for chance agreement.
+
+
+<b>Decision Tree</b>  
+The Decision Tree achieves the highest Kappa value (**0.652**), indicating the strongest agreement beyond chance. Despite having the lowest recall in earlier evaluations, the tree excels in precision and specificity, which boosts its Kappa score. The model’s confident predictions for both classes result in a stronger chance-corrected performance.
+
+
+<u>Do these results change our conclusions?</u>  
+Not entirely, but they do add nuance:
+
+- Earlier sections emphasized **recall**, **precision**, or **specificity** depending on the scenario. Under those criteria, **Lasso Regression** was often the preferred model because of its balanced performance.
+- However, **Cohen’s Kappa favors overall agreement beyond chance**, not the relative importance of specific errors.
+- Under this metric, the **Decision Tree appears strongest**, even though it had the weakest recall.
+
+This makes sense; Kappa rewards models that perform consistently well across all classes, while earlier metrics rewarded models differently depending on clinical priorities (e.g., minimizing false negatives).
+
+
+<u>Conclusion:</u>  
+Cohen’s Kappa provides a different perspective focused on chance-adjusted agreement. While this metric ranks the Decision Tree highest, it does **not override earlier recommendations**, because the appropriate model still depends on the hospital’s priorities (e.g., avoiding false negatives vs. minimizing false positives).
+
+Kappa is helpful for evaluating overall consistency, but it should complement, not replace, domain-specific metrics like recall or specificity in a medical setting.

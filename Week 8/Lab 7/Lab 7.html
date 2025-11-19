@@ -2202,11 +2202,11 @@ vertical-align: -.125em;
 
 <section id="repository-link" class="level3">
 <h3 class="anchored" data-anchor-id="repository-link">Repository Link</h3>
-<p>You can view the full project repository on <a href>Github</a></p>
+<p>You can view the full project repository on <a href="https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%208/Lab%207">Github</a></p>
 </section>
 <section id="part-0-data-cleaning-and-summary" class="level3">
 <h3 class="anchored" data-anchor-id="part-0-data-cleaning-and-summary">Part 0: Data Cleaning and Summary</h3>
-<div id="5593cc85" class="cell" data-execution_count="1">
+<div id="a47a4b2d" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -2303,7 +2303,7 @@ The dataset contains 273 observations and 8 variables describing patient demogra
 </ul>
 <p>The mean <code>cp</code> value of 0.97 indicates that typical angina (value 1) is the most commonly reported chest-pain type in the dataset, with a substantial number of patients also being asymptomatic. The distribution is concentrated in the lower categories (0 and 1), rather than in atypical angina (2) or non-anginal pain (3). Resting blood pressure (<code>trtbps</code>) averages 132 mm Hg, while cholesterol values (<code>chol</code>) range widely from 126 to 564, indicating substantial variability across patients. The maximum heart rate achieved (<code>thalach</code>) also varies considerably, with values from 71 to 202 beats per minute.</p>
 <p>The target variable (<code>output</code>) is roughly balanced, with 146 patients (53%) labeled at risk of a heart attack (1) and 127 patients (47%) labeled not at risk (0). This near-even split ensures that classification models will not be biased by class imbalance. Overall, the dataset provides a diverse set of clinical predictors, each with meaningful variation, making it well-suited for exploring multiple modeling techniques such as KNN, logistic regression, and decision trees.</p>
-<div id="e8cf5180" class="cell" data-execution_count="2">
+<div id="1b5021a0" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot, aes, geom_histogram, labs, theme_minimal</span>
@@ -2329,7 +2329,7 @@ The dataset contains 273 observations and 8 variables describing patient demogra
 </div>
 <p><strong>Interpretation:</strong><br>
 The <code>age</code> distribution of patients shows that most individuals in the dataset are between 45 and 65 years old, with the highest concentration occurring in the late 50s to early 60s. Very few patients are younger than 35 or older than 70, indicating that the sample is primarily composed of middle-aged and older adults. This pattern is consistent with the fact that cardiovascular issues and chest-pain symptoms are more common in these age groups. The distribution is slightly right-skewed, with a small number of older patients, but overall it appears relatively balanced without extreme outliers.</p>
-<div id="bc6a3151" class="cell" data-execution_count="3">
+<div id="7fdb4e88" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> plotnine <span class="im">import</span> ggplot, aes, geom_tile, scale_fill_gradient2, labs, theme_minimal</span>
@@ -2364,7 +2364,7 @@ The correlation heatmap highlights several meaningful relationships among the cl
 <section id="part-1-fitting-models" class="level3">
 <h3 class="anchored" data-anchor-id="part-1-fitting-models">Part 1: Fitting Models</h3>
 <p><strong>KNN Model:</strong></p>
-<div id="388c4dd2" class="cell" data-execution_count="4">
+<div id="f8aa2b7b" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># finding best knn model</span></span>
@@ -2447,7 +2447,7 @@ The correlation heatmap highlights several meaningful relationships among the cl
 KNN_Interactions_Manhattan      17        0.8467</code></pre>
 </div>
 </div>
-<div id="1748df43" class="cell" data-execution_count="5">
+<div id="174c93d0" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># using the best Knn model</span></span>
@@ -2528,7 +2528,7 @@ Best CV ROC AUC: 0.857</code></pre>
 <p>Although KNN does not provide coefficients or feature importance values, the final model demonstrated competitive predictive performance relative to logistic regression and the decision tree, and it responded meaningfully to careful pipeline selection.</p>
 <p>After testing a range of preprocessing and modeling choices, the StandardScaler + Manhattan distance pipeline clearly emerged as the most stable and effective KNN configuration for this dataset.</p>
 <p><strong>Logistic Model:</strong></p>
-<div id="8e40fea7" class="cell" data-execution_count="6">
+<div id="e170c7be" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># finding the best pipeline</span></span>
@@ -2632,7 +2632,7 @@ Best CV ROC AUC: 0.857</code></pre>
 2         0.818  </code></pre>
 </div>
 </div>
-<div id="81114322" class="cell" data-message="false" data-execution_count="7">
+<div id="f0ad800b" class="cell" data-message="false" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LogisticRegression</span>
@@ -2748,7 +2748,7 @@ To identify the strongest logistic regression model, three different regularized
 <p><b>Overall</b></p>
 <p>Logistic regression provides one of the strongest and most interpretable models in this analysis. Its ability to clearly highlight which clinical predictors are most strongly associated with elevated or reduced risk, combined with its high ROC AUC, makes the Lasso Logistic Regression model one of the most informative and effective approaches for predicting heart-attack risk in this dataset.</p>
 <p><strong>Decision Tree:</strong></p>
-<div id="96fee2dc" class="cell" data-message="false" data-execution_count="8">
+<div id="304311df" class="cell" data-message="false" data-execution_count="8">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
@@ -2867,7 +2867,7 @@ To identify the strongest logistic regression model, three different regularized
 3        0.6684  </code></pre>
 </div>
 </div>
-<div id="fdfa0103" class="cell" data-message="false" data-execution_count="9">
+<div id="3a0fc82d" class="cell" data-message="false" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.tree <span class="im">import</span> DecisionTreeClassifier</span>
@@ -2990,7 +2990,7 @@ To identify the strongest decision tree model, several different pipelines were 
 <p>These results highlight how the interaction-based pipeline allowed the decision tree to make use of more nuanced clinical relationships that simple individual predictors do not fully capture.</p>
 <p><b>Overall</b></p>
 <p>After testing multiple preprocessing and structural configurations, the interaction-based decision tree emerged as the most effective version for this dataset. While its ROC AUC remains below that of the KNN and logistic regression models, it still provides a reasonably strong classifier and offers clear interpretability through the features it chose for splitting. The use of interaction features was particularly beneficial, enabling the model to capture more complex and clinically realistic patterns of heart-attack risk.</p>
-<div id="79531e3f" class="cell" data-execution_count="10">
+<div id="a3b849cd" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot ROC curves</span></span>
@@ -3054,7 +3054,7 @@ The cross-validated ROC curves for the three final models, KNN, Lasso Logistic R
 </section>
 <section id="part-2-metrics" class="level3">
 <h3 class="anchored" data-anchor-id="part-2-metrics">Part 2: Metrics</h3>
-<div id="cefca932" class="cell" data-execution_count="11">
+<div id="ff798183" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># creating a function for greater effiecency </span></span>
@@ -3235,7 +3235,7 @@ Using cross-validated metrics as the best estimate of future performance, the ho
 <section id="part-4-validation" class="level3">
 <h3 class="anchored" data-anchor-id="part-4-validation">Part 4: Validation</h3>
 <p><u>Previous Model Performance:</u></p>
-<div id="6a53985c" class="cell" data-execution_count="12">
+<div id="27edd9b9" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reprint the cross-validated metrics from Part 2</span></span>
@@ -3269,7 +3269,7 @@ TNR (Specificity): 0.693</code></pre>
 </div>
 </div>
 <p><u>Model Performance with Validation Dataset:</u></p>
-<div id="d9ba4fad" class="cell" data-execution_count="13">
+<div id="d61315d1" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>val <span class="op">=</span> pd.read_csv(<span class="st">&quot;https://www.dropbox.com/s/jkwqdiyx6o6oad0/heart_attack_validation.csv?dl=1&quot;</span>)</span>
@@ -3359,7 +3359,7 @@ The <u>ROC AUC</u> of 0.919 is slightly higher than the cross-validated value, m
 </section>
 <section id="part-5-cohens-kappa" class="level3">
 <h3 class="anchored" data-anchor-id="part-5-cohens-kappa">Part 5: Cohen’s Kappa</h3>
-<div id="96dfe765" class="cell" data-execution_count="14">
+<div id="3e016843" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> cohen_kappa_score</span>

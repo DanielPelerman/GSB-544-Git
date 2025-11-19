@@ -6,7 +6,7 @@ format:
 ---
 
 ### Repository Link 
-You can view the full project repository on [Github]()
+You can view the full project repository on [Github](https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%208/Lab%207)
 
 ### Part 0: Data Cleaning and Summary
 

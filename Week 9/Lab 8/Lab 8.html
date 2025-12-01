@@ -2202,11 +2202,11 @@ vertical-align: -.125em;
 
 <section id="repository-link" class="level3">
 <h3 class="anchored" data-anchor-id="repository-link">Repository Link</h3>
-<p>You can view the full project repository on <a href>Github</a></p>
+<p>You can view the full project repository on <a href="https://github.com/DanielPelerman/GSB-544-Git/tree/main/Week%209/Lab%208">Github</a></p>
 </section>
 <section id="part-0-data-cleaning-and-summary" class="level3">
 <h3 class="anchored" data-anchor-id="part-0-data-cleaning-and-summary">Part 0: Data Cleaning and Summary</h3>
-<div id="a9a988a0" class="cell" data-execution_count="1">
+<div id="5ff99f5a" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -2320,7 +2320,7 @@ The dataset includes 2,351 cannabis strains and 69 different variables describin
 </section>
 <section id="part-1-binary-classification" class="level3">
 <h3 class="anchored" data-anchor-id="part-1-binary-classification">Part 1: Binary Classification</h3>
-<div id="992ee88a" class="cell" data-execution_count="2">
+<div id="f571c740" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Start from the filtered dataset</span></span>
@@ -2358,7 +2358,7 @@ The dataset includes 2,351 cannabis strains and 69 different variables describin
 Name: count, dtype: int64</code></pre>
 </div>
 </div>
-<div id="1f6583e3" class="cell" data-execution_count="3">
+<div id="2851e5fc" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> cross_val_score</span>
@@ -2402,7 +2402,7 @@ Name: count, dtype: int64</code></pre>
 </div>
 </div>
 <p><i>LDA does not require hyperparameter tuning in this setting because the version used in class has no tunable arguments. Since all predictors were included for every model, the only step needed was to perform cross-validation directly on the base LDA model and then fit it on the full cleaned dataset. LDA provides a strong baseline linear classifier and performed well overall.</i></p>
-<div id="51779f57" class="cell" data-execution_count="4">
+<div id="cfd45a09" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.discriminant_analysis <span class="im">import</span> QuadraticDiscriminantAnalysis</span>
@@ -2456,7 +2456,7 @@ Mean CV accuracy: 0.8542</code></pre>
 </div>
 </div>
 <p><i>QDA includes a shrinkage parameter (reg_param) that can help stabilize covariance estimates when working with high-dimensional data. A small GridSearchCV was used to select the best-performing model. After identifying the best parameter, the final QDA model was fit on the full dataset.</i></p>
-<div id="c61efb87" class="cell" data-execution_count="5">
+<div id="35373f2d" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.svm <span class="im">import</span> SVC</span>
@@ -2514,7 +2514,7 @@ Mean CV accuracy: 0.8364</code></pre>
 </div>
 </div>
 <p><i>SVC was fit using the RBF kernel, which is the nonlinear SVM model introduced in class. Because SVMs rely on distance-based kernels, all predictors were standardized using a pipeline. Tuning was limited to the key hyperparameters C and gamma, which control model flexibility and smoothness of the decision boundary. The best-performing combination was then used to fit the final model.</i></p>
-<div id="f75a7c36" class="cell" data-execution_count="6">
+<div id="410e9265" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">&quot;ignore&quot;</span>, category<span class="op">=</span><span class="pp">RuntimeWarning</span>)</span>
@@ -2574,7 +2574,7 @@ Across all four models, overall accuracy served as an appropriate evaluation met
 </section>
 <section id="part-2-natural-multiclass" class="level3">
 <h3 class="anchored" data-anchor-id="part-2-natural-multiclass">Part 2: Natural Multiclass</h3>
-<div id="66205e2e" class="cell" data-execution_count="7">
+<div id="7a3803dd" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>df_multi <span class="op">=</span> df.copy()</span>
@@ -2600,7 +2600,7 @@ sativa     431
 Name: count, dtype: int64</code></pre>
 </div>
 </div>
-<div id="6e59f1d8" class="cell" data-execution_count="8">
+<div id="573a29cd" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.tree <span class="im">import</span> DecisionTreeClassifier, plot_tree</span>
@@ -2666,7 +2666,7 @@ The decision tree selected a maximum depth of 3, which indicates that only a sma
 <p>After the initial split, the tree further divides samples based on additional effect and flavor indicators such as <code>Energetic</code>, <code>Relaxed</code>, <code>Uplifted</code>, <code>Citrus</code>, <code>Woody</code>, and <code>Grape</code>. These splits show that perceived effects are more influential than flavor variables for differentiating the three strain types. For example, the branch characterized by <code>Energetic</code> being absent tends to contain more indica samples, while the branch involving <code>Uplifted</code> points toward sativa-like characteristics.</p>
 <p>Although the tree identifies meaningful relationships, the nodes remain mixed, especially where hybrids appear. The confusion matrix reflects this pattern. The model correctly identifies many indica samples (861) but frequently misclassifies hybrids as indica or sativa. This occurs because hybrid strains share traits with both pure types, making them harder to separate using a small set of decision rules.</p>
 <p>Overall, the tree offers interpretable insights into which effects are most important for classification. However, the model’s predictive performance (mean cross-validated accuracy of 0.6217) suggests that the three classes overlap substantially and are not easily separated by a shallow tree. The decision tree highlights key patterns in the data, but the inherent similarity among the strain types limits its accuracy.</p>
-<div id="9e1396c7" class="cell" data-execution_count="9">
+<div id="7cee376b" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>lda_multi <span class="op">=</span> LinearDiscriminantAnalysis()</span>
@@ -2701,7 +2701,7 @@ The decision tree selected a maximum depth of 3, which indicates that only a sma
 </div>
 </div>
 <p><i>LDA extends naturally to the multiclass case by estimating linear boundaries that best separate indica, sativa, and hybrid strains. The confusion matrix indicates that indica and sativa are somewhat distinguishable, but hybrids remain difficult to classify because they share characteristics with both categories. The relatively large number of hybrid misclassifications reflects this overlap. Since LDA assumes equal covariance across all classes, this restriction limits its flexibility in a dataset where hybrid strains occupy a middle ground between the other two. As a result, the multiclass accuracy is noticeably lower than in the binary setting, but LDA still performs as a stable linear baseline.</i></p>
-<div id="688127a9" class="cell" data-execution_count="10">
+<div id="2cf07aa6" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>qda_multi <span class="op">=</span> QuadraticDiscriminantAnalysis()</span>
@@ -2747,7 +2747,7 @@ Mean CV accuracy: 0.626</code></pre>
 </div>
 </div>
 <p><i>QDA relaxes the equal-covariance assumption by allowing each class to have its own covariance matrix. In theory, this gives QDA greater flexibility to model the nonlinear boundaries between indica, sativa, and hybrid. In practice, the results show only a slight improvement in some confusion matrix entries but no major gain in overall accuracy relative to LDA. This suggests that the main challenge is not linearity but overlapping feature distributions, particularly for hybrid strains. Hybrids are frequently misclassified into indica or sativa because many of their effects and flavors appear in both categories. While QDA can adapt more to class-specific variation, the overlap across categories limits the benefit of this increased flexibility.</i></p>
-<div id="4915647f" class="cell" data-execution_count="11">
+<div id="51824dc7" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.neighbors <span class="im">import</span> KNeighborsClassifier</span>
@@ -2840,7 +2840,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
 </section>
 <section id="part-3-multiclass-from-binary" class="level3">
 <h3 class="anchored" data-anchor-id="part-3-multiclass-from-binary">Part 3: Multiclass from Binary</h3>
-<div id="5f52cff9" class="cell" data-execution_count="12">
+<div id="59f805a8" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># INDICA = 1, SATIVA = 0, HYBRID = 2</span></span>
@@ -2877,7 +2877,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
  [ 216  471]]</code></pre>
 </div>
 </div>
-<div id="5c1895c9" class="cell" data-execution_count="13">
+<div id="fa4f6699" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Sativa vs Not Sativa</span></span>
@@ -2912,7 +2912,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
  [244 943]]</code></pre>
 </div>
 </div>
-<div id="8f00e98b" class="cell" data-execution_count="14">
+<div id="a47840c6" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Hybrid vs Not Hybrid</span></span>
@@ -2947,7 +2947,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
  [ 285  146]]</code></pre>
 </div>
 </div>
-<div id="b82b80f2" class="cell" data-execution_count="15">
+<div id="2eac6c3f" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LogisticRegression</span>
@@ -2984,7 +2984,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
  [ 258  429]]</code></pre>
 </div>
 </div>
-<div id="9708242d" class="cell" data-execution_count="16">
+<div id="b4eabe84" class="cell" data-execution_count="16">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. LR Sativa vs Not Sativa</span></span>
@@ -3019,7 +3019,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
  [348 839]]</code></pre>
 </div>
 </div>
-<div id="8437c44e" class="cell" data-execution_count="17">
+<div id="eba31909" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. LR Hybrid vs Not Hybrid</span></span>
@@ -3081,7 +3081,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
 </section>
 <section id="q3" class="level3">
 <h3 class="anchored" data-anchor-id="q3">Q3</h3>
-<div id="abf62bbc" class="cell" data-execution_count="18">
+<div id="226babf1" class="cell" data-execution_count="18">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># INDICA = 1, SATIVA = 0, HYBRID = 2</span></span>
@@ -3121,7 +3121,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
  [ 198  489]]</code></pre>
 </div>
 </div>
-<div id="bacaf4d8" class="cell" data-execution_count="19">
+<div id="e8022ebd" class="cell" data-execution_count="19">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LogisticRegression</span>
@@ -3156,7 +3156,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
  [239 448]]</code></pre>
 </div>
 </div>
-<div id="811f5d42" class="cell" data-execution_count="20">
+<div id="35cbd7cb" class="cell" data-execution_count="20">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Indica vs Hybrid</span></span>
@@ -3194,7 +3194,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
  [ 59 372]]</code></pre>
 </div>
 </div>
-<div id="c9da9a19" class="cell" data-execution_count="21">
+<div id="39657b18" class="cell" data-execution_count="21">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="co">#  Logistic Regression </span></span>
@@ -3227,7 +3227,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
  [ 76 355]]</code></pre>
 </div>
 </div>
-<div id="2e87cb9d" class="cell" data-execution_count="22">
+<div id="333e544e" class="cell" data-execution_count="22">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb66"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Hybrid vs Sativa</span></span>
@@ -3266,7 +3266,7 @@ KNN had the lowest performance with a mean CV accuracy of <code>0.5427</code>, m
  [ 263  168]]</code></pre>
 </div>
 </div>
-<div id="fe4721b7" class="cell" data-execution_count="23">
+<div id="b89f3508" class="cell" data-execution_count="23">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb69"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="co">#  Logistic Regression </span></span>

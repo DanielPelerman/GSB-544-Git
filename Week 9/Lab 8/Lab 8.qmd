@@ -1,0 +1,827 @@
+---
+title: "Lab 8"
+format:
+  html:
+    embed-resources: true
+---
+
+### Repository Link 
+You can view the full project repository on [Github]()
+
+### Part 0: Data Cleaning and Summary
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+import pandas as pd
+from IPython.display import HTML, display
+
+url = "https://www.dropbox.com/s/s2a1uoiegitupjc/cannabis_full.csv?dl=1"
+df = pd.read_csv(url)
+
+display(HTML("<b>Data Preview:</b>"))
+print(df.head())
+
+display(HTML("<b>Data types:</b>"))
+print(df.dtypes)
+
+display(HTML("<b>Missing values per column:</b>"))
+print(df.isna().sum())
+
+display(HTML("<b>Dataset shape (rows, columns):</b>"))
+print(df.shape)
+
+display(HTML("<b>Non-missing values per column:</b>"))
+print(df.count())
+
+```
+
+<b>Data Summary:</b>  
+The dataset includes 2,351 cannabis strains and 69 different variables describing things like each strain’s type, rating, reported effects, and flavor notes. Core columns such as Strain, Type, and Rating are fully complete, while the text-based fields Effects and Flavor have some missing entries (87 and 156, respectively). The remaining 60+ columns are one-hot encoded indicators showing whether a specific effect or flavor is present. These also include a small amount of missing data (usually around 46 rows per column). Overall, the dataset mixes categorical information, numerical ratings, and a wide set of binary features, giving us a detailed foundation for exploring and building classification models.
+
+### Part 1: Binary Classification
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# Start from the filtered dataset
+df_binary = df[df["Type"].isin(["sativa", "indica"])].copy()
+
+# Drop string columns (we won't use these)
+df_binary = df_binary.drop(columns=["Strain", "Effects", "Flavor"])
+
+# Convert target to binary
+df_binary["Type_binary"] = (df_binary["Type"] == "indica").astype(int)
+
+# Drop original Type column
+df_binary = df_binary.drop(columns=["Type"])
+
+df_binary = df_binary.dropna()
+
+X = df_binary.drop(columns=["Type_binary"])
+y = df_binary["Type_binary"]
+
+print("New dataset shape:", df_binary.shape)
+
+display(HTML("<b>Count of indica vs sativa after cleaning:</b> (Indica = 1, Sativa = 0)"))
+print(df_binary["Type_binary"].value_counts())
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.model_selection import cross_val_score
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.metrics import confusion_matrix
+from IPython.display import HTML, display
+import warnings
+
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+# Create model
+lda = LinearDiscriminantAnalysis()
+
+# Cross-validated accuracy
+cv_scores = cross_val_score(lda, X, y, cv=5, scoring="accuracy")
+
+display(HTML("<b>LDA Cross-validated accuracy:</b>"))
+print("Mean CV accuracy:", round(cv_scores.mean(), 4))
+
+# Fit final model on entire dataset
+lda_final = LinearDiscriminantAnalysis().fit(X, y)
+
+# Predictions + confusion matrix
+preds = lda_final.predict(X)
+
+display(HTML("<b>LDA Confusion matrix:</b>"))
+print(confusion_matrix(y, preds))
+
+```
+
+<i>LDA does not require hyperparameter tuning in this setting because the version used in class has no tunable arguments. Since all predictors were included for every model, the only step needed was to perform cross-validation directly on the base LDA model and then fit it on the full cleaned dataset. LDA provides a strong baseline linear classifier and performed well overall.</i>
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.model_selection import GridSearchCV
+import warnings
+
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+qda = QuadraticDiscriminantAnalysis()
+
+param_grid = {
+    "reg_param": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+}
+
+qda_search = GridSearchCV(
+    qda,
+    param_grid=param_grid,
+    cv=5,
+    scoring="accuracy"
+)
+
+qda_search.fit(X, y)
+
+display(HTML("<b>QDA Cross-validated accuracy:</b>"))
+print("Best reg_param:", qda_search.best_params_["reg_param"])
+print("Mean CV accuracy:", round(qda_search.best_score_, 4))
+
+qda_final = QuadraticDiscriminantAnalysis(
+    reg_param=qda_search.best_params_["reg_param"]
+).fit(X, y)
+
+# Predictions + confusion matrix
+qda_preds = qda_final.predict(X)
+
+display(HTML("<b>QDA Confusion matrix:</b>"))
+print(confusion_matrix(y, qda_preds))
+
+```
+
+<i>QDA includes a shrinkage parameter (reg_param) that can help stabilize covariance estimates when working with high-dimensional data. A small GridSearchCV was used to select the best-performing model. After identifying the best parameter, the final QDA model was fit on the full dataset.</i>
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+svc_pipeline = Pipeline([
+    ("scaler", StandardScaler()),
+    ("svc", SVC(kernel="rbf"))
+])
+
+param_grid = {
+    "svc__C": [0.1, 1, 10],
+    "svc__gamma": [0.01, 0.1, 1]
+}
+
+svc_search = GridSearchCV(
+    svc_pipeline,
+    param_grid=param_grid,
+    cv=5,
+    scoring="accuracy"
+)
+
+svc_search.fit(X, y)
+
+# cross-validated results
+display(HTML("<b>SVC Cross-validated accuracy:</b>"))
+print("Best parameters:", svc_search.best_params_)
+print("Mean CV accuracy:", round(svc_search.best_score_, 4))
+
+# fit final model
+svc_final = svc_search.best_estimator_.fit(X, y)
+
+# confusion matrix
+svc_preds = svc_final.predict(X)
+
+display(HTML("<b>SVC Confusion matrix:</b>"))
+print(confusion_matrix(y, svc_preds))
+
+```
+
+<i>SVC was fit using the RBF kernel, which is the nonlinear SVM model introduced in class. Because SVMs rely on distance-based kernels, all predictors were standardized using a pipeline. Tuning was limited to the key hyperparameters C and gamma, which control model flexibility and smoothness of the decision boundary. The best-performing combination was then used to fit the final model.</i>
+
+```{python}
+#| echo: true
+#| code-fold: true
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+svm_pipeline = Pipeline([
+    ("scaler", StandardScaler()),
+    ("svm", SVC(kernel="poly"))
+])
+
+param_grid = {
+    "svm__C": [0.1, 1, 10],
+    "svm__degree": [2, 3, 4]
+}
+
+svm_search = GridSearchCV(
+    svm_pipeline,
+    param_grid=param_grid,
+    cv=5,
+    scoring="accuracy"
+)
+
+svm_search.fit(X, y)
+
+# cross-validated accuracy
+display(HTML("<b>SVM (Polynomial) Cross-validated accuracy:</b>"))
+print("Best parameters:", svm_search.best_params_)
+print("Mean CV accuracy:", round(svm_search.best_score_, 4))
+
+# Fit final model using best hyperparameters
+svm_final = svm_search.best_estimator_.fit(X, y)
+
+# Predictions + confusion matrix
+svm_preds = svm_final.predict(X)
+
+display(HTML("<b>SVM (Polynomial) Confusion matrix:</b>"))
+print(confusion_matrix(y, svm_preds))
+
+```
+
+<i>The polynomial SVM model was evaluated separately from SVC, consistent with the lab instructions. Only C and the polynomial degree were tuned, as these are the core hyperparameters discussed in class. A scaling step was included in the pipeline, and the best polynomial SVM was then fit on the full dataset to obtain final predictions.</i>
+
+<b>Part 1 Conclusion:</b>  
+Across all four models, overall accuracy served as an appropriate evaluation metric because neither class (indica vs. sativa) was prioritized in the problem definition, and the cleaned dataset remained reasonably balanced. Accuracy therefore provided a fair measure of how well each model separated the two types without weighting one outcome more heavily than the other.
+
+Among the models, QDA achieved the highest cross-validated accuracy (0.8542), suggesting that allowing class-specific covariance structures provided a measurable benefit in this setting. LDA also performed strongly (0.8426), indicating that a linear boundary captures much of the inherent structure in the predictors. The SVM models performed slightly lower overall, with SVC (RBF) at 0.8364 and the polynomial SVM at 0.8301, though both produced confusion matrices with relatively few misclassifications, particularly for the indica class. These results show that while all four methods performed well, QDA provided the best combination of accuracy and predictive stability for distinguishing between indica and sativa strains.
+
+### Part 2: Natural Multiclass
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+df_multi = df.copy()
+
+df_multi = df_multi.drop(columns=["Strain", "Effects", "Flavor"])
+df_multi = df_multi.dropna()
+
+# Encode target into multiclass labels (indica, sativa, hybrid)
+df_multi["Type_multi"] = df_multi["Type"].astype("category").cat.codes
+
+X_multi = df_multi.drop(columns=["Type", "Type_multi"])
+y_multi = df_multi["Type_multi"]
+
+print("New multiclass dataset shape:", df_multi.shape)
+print(df_multi["Type"].value_counts())
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+import matplotlib.pyplot as plt
+
+# Decision tree with tuning for max_depth
+tree = DecisionTreeClassifier(random_state=321)
+
+param_grid = {"max_depth": [1, 2, 3, 4, 5, 6, 7, None]}
+
+tree_search = GridSearchCV(
+    tree, 
+    param_grid=param_grid,
+    cv=5,
+    scoring="accuracy"
+)
+
+tree_search.fit(X_multi, y_multi)
+
+display(HTML("<b>Decision Tree Cross-validated accuracy:</b>"))
+print("Best max_depth:", tree_search.best_params_["max_depth"])
+print("Mean CV accuracy:", round(tree_search.best_score_, 4))
+
+# Fit final model
+tree_final = tree_search.best_estimator_.fit(X_multi, y_multi)
+
+# Predictions + confusion matrix
+tree_preds = tree_final.predict(X_multi)
+
+display(HTML("<b>Decision Tree Confusion matrix:</b>"))
+print(confusion_matrix(y_multi, tree_preds))
+
+# Plot the tree
+plt.figure(figsize=(15, 10))
+plot_tree(tree_final, filled=True, fontsize=8, feature_names=X_multi.columns)
+plt.show()
+
+```
+<b>Decision Tree Interpretation:</b>  
+The decision tree selected a maximum depth of 3, which indicates that only a small number of features are needed to capture the main structure that distinguishes among indica, sativa, and hybrid strains. The first split is based on the Sleepy effect. This split separates strains with relaxing, sedative characteristics from strains that do not exhibit this effect, which aligns with how indica strains are typically described.
+
+After the initial split, the tree further divides samples based on additional effect and flavor indicators such as `Energetic`, `Relaxed`, `Uplifted`, `Citrus`, `Woody`, and `Grape`. These splits show that perceived effects are more influential than flavor variables for differentiating the three strain types. For example, the branch characterized by `Energetic` being absent tends to contain more indica samples, while the branch involving `Uplifted` points toward sativa-like characteristics.
+
+Although the tree identifies meaningful relationships, the nodes remain mixed, especially where hybrids appear. The confusion matrix reflects this pattern. The model correctly identifies many indica samples (861) but frequently misclassifies hybrids as indica or sativa. This occurs because hybrid strains share traits with both pure types, making them harder to separate using a small set of decision rules.
+
+Overall, the tree offers interpretable insights into which effects are most important for classification. However, the model's predictive performance (mean cross-validated accuracy of 0.6217) suggests that the three classes overlap substantially and are not easily separated by a shallow tree. The decision tree highlights key patterns in the data, but the inherent similarity among the strain types limits its accuracy.
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+lda_multi = LinearDiscriminantAnalysis()
+
+lda_cv = cross_val_score(lda_multi, X_multi, y_multi, cv=5, scoring="accuracy")
+
+display(HTML("<b>LDA (Multiclass) Cross-validated accuracy:</b>"))
+print("Mean CV accuracy:", round(lda_cv.mean(), 4))
+
+# Fit final model
+lda_multi_final = lda_multi.fit(X_multi, y_multi)
+
+# Predictions + confusion matrix
+lda_multi_preds = lda_multi_final.predict(X_multi)
+
+display(HTML("<b>LDA (Multiclass) Confusion matrix:</b>"))
+print(confusion_matrix(y_multi, lda_multi_preds))
+
+```
+
+<i>LDA extends naturally to the multiclass case by estimating linear boundaries that best separate indica, sativa, and hybrid strains. The confusion matrix indicates that indica and sativa are somewhat distinguishable, but hybrids remain difficult to classify because they share characteristics with both categories. The relatively large number of hybrid misclassifications reflects this overlap. Since LDA assumes equal covariance across all classes, this restriction limits its flexibility in a dataset where hybrid strains occupy a middle ground between the other two. As a result, the multiclass accuracy is noticeably lower than in the binary setting, but LDA still performs as a stable linear baseline.</i>
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+qda_multi = QuadraticDiscriminantAnalysis()
+
+param_grid = {"reg_param": [0, 0.1, 0.2, 0.3]}
+
+qda_search_multi = GridSearchCV(
+    qda_multi, 
+    param_grid=param_grid, 
+    cv=5, 
+    scoring="accuracy"
+)
+
+qda_search_multi.fit(X_multi, y_multi)
+
+display(HTML("<b>QDA (Multiclass) Cross-validated accuracy:</b>"))
+print("Best reg_param:", qda_search_multi.best_params_["reg_param"])
+print("Mean CV accuracy:", round(qda_search_multi.best_score_, 4))
+
+# Fit final model
+qda_multi_final = qda_search_multi.best_estimator_.fit(X_multi, y_multi)
+
+# Predictions + confusion matrix
+qda_multi_preds = qda_multi_final.predict(X_multi)
+
+display(HTML("<b>QDA (Multiclass) Confusion matrix:</b>"))
+print(confusion_matrix(y_multi, qda_multi_preds))
+
+```
+
+<i>QDA relaxes the equal-covariance assumption by allowing each class to have its own covariance matrix. In theory, this gives QDA greater flexibility to model the nonlinear boundaries between indica, sativa, and hybrid. In practice, the results show only a slight improvement in some confusion matrix entries but no major gain in overall accuracy relative to LDA. This suggests that the main challenge is not linearity but overlapping feature distributions, particularly for hybrid strains. Hybrids are frequently misclassified into indica or sativa because many of their effects and flavors appear in both categories. While QDA can adapt more to class-specific variation, the overlap across categories limits the benefit of this increased flexibility.</i>
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+
+knn_pipeline = Pipeline([
+    ("scaler", StandardScaler()),
+    ("knn", KNeighborsClassifier())
+])
+
+param_grid_knn = {
+    "knn__n_neighbors": list(range(1, 11))
+}
+
+knn_search = GridSearchCV(
+    knn_pipeline,
+    param_grid=param_grid_knn,
+    cv=5,
+    scoring="accuracy"
+)
+
+knn_search.fit(X_multi, y_multi)
+
+display(HTML("<b>KNN (Multiclass) Cross-validated accuracy:</b>"))
+print("Best k:", knn_search.best_params_["knn__n_neighbors"])
+print("Mean CV accuracy:", round(knn_search.best_score_, 4))
+
+knn_multi_final = knn_search.best_estimator_.fit(X_multi, y_multi)
+
+# Predictions + confusion matrix
+knn_multi_preds = knn_multi_final.predict(X_multi)
+
+display(HTML("<b>KNN (Multiclass) Confusion matrix:</b>"))
+print(confusion_matrix(y_multi, knn_multi_preds))
+
+```
+
+<i>KNN uses distance-based classification, so a strain is predicted according to the labels of its closest neighbors in feature space. Because hybrids often sit between indica and sativa in the predictor space (effects and flavors that are partially shared across both), their nearest neighbors tend to be a mixture. This results in frequent misclassification of hybrids into the other two categories. The confusion matrix also shows some sativa-indica confusion, especially when effects or flavors are less distinctive. Even with the best value of k = 5, KNN performs worse than LDA and QDA. This is expected because distance-based methods struggle when class boundaries are not well separated and when the feature space contains correlated or overlapping patterns, as is the case with cannabis strain descriptors.</i>
+
+#### **Q3: Comparison to Part One and Class Confusion Patterns**
+
+Overall, model performance in the multiclass setting was clearly worse than in the binary classification task from Part One. This decline is expected because the multiclass problem adds the `hybrid` category, which overlaps heavily with both `indica` and `sativa`. This overlap reduces class separation and increases the likelihood of misclassification for every model.
+
+#### **Performance Differences Across Models**
+
+**LDA**  
+The multiclass LDA model achieved a mean CV accuracy of `0.6291`, which is noticeably lower than the `0.8426` accuracy from the binary setting. LDA assumes equal covariance across all classes. This assumption becomes more restrictive when the three groups overlap substantially. Since `hybrid` strains share characteristics with both `indica` and `sativa`, separation is less distinct. As a result, the multiclass accuracy drops even though LDA still serves as a stable linear baseline.
+
+**QDA**  
+Multiclass QDA reached a mean CV accuracy of `0.626`, compared to `0.8542` in the binary task. While QDA allows each class to have its own covariance structure, the multiclass version divides the dataset into three groups, which reduces the effective sample size for estimating covariance matrices. This makes the model more variable and less stable. The overlap between categories, especially for `hybrid`, further contributes to reduced accuracy.
+
+**KNN**  
+KNN had the lowest performance with a mean CV accuracy of `0.5427`, much lower than in Part One. Since KNN is based entirely on distances in the feature space, it suffers the most when local neighborhoods contain a mix of different classes. This happens frequently for strains labeled as `hybrid`, because the feature space around them often contains neighbors from multiple categories.
+
+#### **Which Categories Were Most Confused**
+
+Across all models, the confusion matrices show the same pattern:
+
+* `hybrid` was the most frequently misclassified category.
+* Many `hybrid` samples were predicted as `indica` or `sativa` because the feature patterns overlap.
+* `indica` and `sativa` were more consistently separated, but still had some confusion for strains with similar effects or flavor profiles.
+* KNN had the highest rate of incorrect hybrid classifications due to mixed neighborhoods around hybrid samples.
+
+#### **Why This Happened**
+
+Several factors explain the performance drop and confusion patterns:
+
+* `hybrid` strains combine characteristics of both `indica` and `sativa`, so the three groups are not easily separable.
+* Adding the third class reduces sample size per class, which weakens the statistical estimation for LDA and QDA.
+* Decision boundaries become more complex in a three-class setting.
+* Distance-based methods like KNN are especially affected by overlapping feature space regions.
+
+#### **Final Summary**
+
+Every model performed worse in Part Two compared to Part One because the presence of the `hybrid` category makes the classification problem more difficult. The `hybrid` strains were the most likely to be misclassified. The confusion between categories reflects the real-world nature of cannabis strain characteristics, where hybrids often share traits with both major strain types. The results are consistent with expectations for multiclass modeling in a dataset where one class overlaps heavily with the others.
+
+### Part 3: Multiclass from Binary
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+# INDICA = 1, SATIVA = 0, HYBRID = 2
+
+# 1. Indica vs Not Indica
+y_indica = (y_multi == 1).astype(int)
+
+svc_indica = Pipeline([
+    ("scaler", StandardScaler()),
+    ("svc", SVC(kernel="rbf"))
+])
+
+cv_scores = cross_val_score(svc_indica, X_multi, y_indica, cv=5, scoring="accuracy")
+display(HTML("<b>SVC OvR – Indica vs Not Indica (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+svc_indica_fitted = svc_indica.fit(X_multi, y_indica)
+preds = svc_indica_fitted.predict(X_multi)
+
+display(HTML("<b>SVC OvR – Indica vs Not Indica (Confusion Matrix):</b>"))
+print(confusion_matrix(y_indica, preds))
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# 2. Sativa vs Not Sativa
+y_sativa = (y_multi == 0).astype(int)
+
+svc_sativa = Pipeline([
+    ("scaler", StandardScaler()),
+    ("svc", SVC(kernel="rbf"))
+])
+
+cv_scores = cross_val_score(svc_sativa, X_multi, y_sativa, cv=5, scoring="accuracy")
+display(HTML("<b>SVC OvR – Sativa vs Not Sativa (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+svc_sativa_fitted = svc_sativa.fit(X_multi, y_sativa)
+preds = svc_sativa_fitted.predict(X_multi)
+
+display(HTML("<b>SVC OvR – Sativa vs Not Sativa (Confusion Matrix):</b>"))
+print(confusion_matrix(y_sativa, preds))
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# 3. Hybrid vs Not Hybrid
+y_hybrid = (y_multi == 2).astype(int)
+
+svc_hybrid = Pipeline([
+    ("scaler", StandardScaler()),
+    ("svc", SVC(kernel="rbf"))
+])
+
+cv_scores = cross_val_score(svc_hybrid, X_multi, y_hybrid, cv=5, scoring="accuracy")
+display(HTML("<b>SVC OvR – Hybrid vs Not Hybrid (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+svc_hybrid_fitted = svc_hybrid.fit(X_multi, y_hybrid)
+preds = svc_hybrid_fitted.predict(X_multi)
+
+display(HTML("<b>SVC OvR – Hybrid vs Not Hybrid (Confusion Matrix):</b>"))
+print(confusion_matrix(y_hybrid, preds))
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+from sklearn.linear_model import LogisticRegression
+
+# 4. LR Indica vs Not Indica
+y_indica = (y_multi == 1).astype(int)
+
+lr_indica = Pipeline([
+    ("scaler", StandardScaler()),
+    ("lr", LogisticRegression(solver="liblinear"))
+])
+
+cv_scores = cross_val_score(lr_indica, X_multi, y_indica, cv=5, scoring="accuracy")
+display(HTML("<b>LR OvR – Indica vs Not Indica (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+lr_indica_fitted = lr_indica.fit(X_multi, y_indica)
+preds = lr_indica_fitted.predict(X_multi)
+
+display(HTML("<b>LR OvR – Indica vs Not Indica (Confusion Matrix):</b>"))
+print(confusion_matrix(y_indica, preds))
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# 5. LR Sativa vs Not Sativa
+y_sativa = (y_multi == 0).astype(int)
+
+lr_sativa = Pipeline([
+    ("scaler", StandardScaler()),
+    ("lr", LogisticRegression(solver="liblinear"))
+])
+
+cv_scores = cross_val_score(lr_sativa, X_multi, y_sativa, cv=5, scoring="accuracy")
+display(HTML("<b>LR OvR – Sativa vs Not Sativa (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+lr_sativa_fitted = lr_sativa.fit(X_multi, y_sativa)
+preds = lr_sativa_fitted.predict(X_multi)
+
+display(HTML("<b>LR OvR – Sativa vs Not Sativa (Confusion Matrix):</b>"))
+print(confusion_matrix(y_sativa, preds))
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# 6. LR Hybrid vs Not Hybrid
+y_hybrid = (y_multi == 2).astype(int)
+
+lr_hybrid = Pipeline([
+    ("scaler", StandardScaler()),
+    ("lr", LogisticRegression(solver="liblinear"))
+])
+
+cv_scores = cross_val_score(lr_hybrid, X_multi, y_hybrid, cv=5, scoring="accuracy")
+display(HTML("<b>LR OvR – Hybrid vs Not Hybrid (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+lr_hybrid_fitted = lr_hybrid.fit(X_multi, y_hybrid)
+preds = lr_hybrid_fitted.predict(X_multi)
+
+display(HTML("<b>LR OvR – Hybrid vs Not Hybrid (Confusion Matrix):</b>"))
+print(confusion_matrix(y_hybrid, preds))
+
+```
+
+
+#### **Q2: Interpretation of Multiclass Models (LDA, QDA, KNN)**
+
+Across the multiclass setting, the three models showed varying levels of success in separating `indica`, `sativa`, and `hybrid` strains. Their performance reflects both differences in model structure and the inherent overlap among the strain categories.
+
+#### **Best-Performing Model**
+
+The best-performing model in the multiclass analysis was **LDA**, with an accuracy of **0.6291**.
+LDA’s advantage stems from its ability to find linear boundaries using shared covariance across the classes, which works reasonably well when the groups exhibit broad linear structure. Even though hybrids overlap substantially with the other two categories, LDA was still able to establish stable class boundaries, making it the most effective model of the three.
+
+#### **Worst-Performing Model**
+
+The model with the lowest accuracy was **KNN**, which achieved **0.5427**.
+This result fits expectations: in a dataset where hybrids sit between `indica` and `sativa`, KNN’s local-neighbor approach struggles because many hybrid observations lie close to both other categories. As a result, neighbor-based decisions become noisy, and misclassifications increase. Although KNN was reasonably competitive, it clearly fell short of the other two models.
+
+#### **Comparison Across Strain Types**
+
+* **Most distinguishable categories:**
+  Across all models, `indica` tended to be classified more accurately than `sativa` or `hybrid`. Indica strains appear to have more distinct feature profiles, especially in relaxation, sleepiness, and certain terpene patterns.
+
+* **Moderate difficulty:**
+  The boundary between `sativa` and the other groups showed moderate confusion. Sativas possess energetic and uplifting characteristics but sometimes share chemical patterns with hybrids.
+
+* **Hardest category to classify:**
+  `hybrid` strains were consistently the most challenging class across all models. This is expected because hybrids blend characteristics of both `indica` and `sativa`, causing them to fall near the centers of decision boundaries and leading to overlap in all three modeling approaches.
+
+#### **Summary**
+
+Overall, **LDA** offered the strongest performance, providing the most stable and interpretable boundaries among the three strain types. **QDA** followed closely behind, benefiting from class-specific covariance structures but still limited by hybrid overlap. **KNN** performed the weakest due to its sensitivity to local noise and clustered class boundaries. The overall pattern of results reflects the natural structure of the data: `indica` is the easiest class to separate, `sativa` is moderately distinguishable, and `hybrid` remains the most ambiguous and consistently misclassified category.
+
+
+### Q3  
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# INDICA = 1, SATIVA = 0, HYBRID = 2
+
+# 1. Indica vs Sativa
+mask_ivs = y_multi.isin([1, 0])
+X_ivs = X_multi[mask_ivs]
+y_ivs = y_multi[mask_ivs]
+
+#  SVC 
+svc_ivs = Pipeline([
+    ("scaler", StandardScaler()),
+    ("svc", SVC(kernel="rbf"))
+])
+
+cv_scores = cross_val_score(svc_ivs, X_ivs, y_ivs, cv=5, scoring="accuracy")
+display(HTML("<b>SVC OvO — Indica vs Sativa (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+svc_ivs_fitted = svc_ivs.fit(X_ivs, y_ivs)
+preds = svc_ivs_fitted.predict(X_ivs)
+
+display(HTML("<b>SVC OvO — Indica vs Sativa (Confusion Matrix):</b>"))
+print(confusion_matrix(y_ivs, preds))
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.linear_model import LogisticRegression
+
+# Logistic Regression 
+lr_ivs = Pipeline([
+    ("scaler", StandardScaler()),
+    ("lr", LogisticRegression(max_iter=500))
+])
+
+cv_scores = cross_val_score(lr_ivs, X_ivs, y_ivs, cv=5, scoring="accuracy")
+display(HTML("<b>LR OvO — Indica vs Sativa (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+lr_ivs_fitted = lr_ivs.fit(X_ivs, y_ivs)
+preds = lr_ivs_fitted.predict(X_ivs)
+
+display(HTML("<b>LR OvO — Indica vs Sativa (Confusion Matrix):</b>"))
+print(confusion_matrix(y_ivs, preds))
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# 2. Indica vs Hybrid
+mask_ivh = y_multi.isin([1, 2])
+X_ivh = X_multi[mask_ivh]
+y_ivh = y_multi[mask_ivh]
+
+#  SVC 
+svc_ivh = Pipeline([
+    ("scaler", StandardScaler()),
+    ("svc", SVC(kernel="rbf"))
+])
+
+cv_scores = cross_val_score(svc_ivh, X_ivh, y_ivh, cv=5, scoring="accuracy")
+display(HTML("<b>SVC OvO — Indica vs Hybrid (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+svc_ivh_fitted = svc_ivh.fit(X_ivh, y_ivh)
+preds = svc_ivh_fitted.predict(X_ivh)
+
+display(HTML("<b>SVC OvO — Indica vs Hybrid (Confusion Matrix):</b>"))
+print(confusion_matrix(y_ivh, preds))
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+#  Logistic Regression 
+lr_ivh = Pipeline([
+    ("scaler", StandardScaler()),
+    ("lr", LogisticRegression(max_iter=500))
+])
+
+cv_scores = cross_val_score(lr_ivh, X_ivh, y_ivh, cv=5, scoring="accuracy")
+display(HTML("<b>LR OvO — Indica vs Hybrid (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+lr_ivh_fitted = lr_ivh.fit(X_ivh, y_ivh)
+preds = lr_ivh_fitted.predict(X_ivh)
+
+display(HTML("<b>LR OvO — Indica vs Hybrid (Confusion Matrix):</b>"))
+print(confusion_matrix(y_ivh, preds))
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+
+# 3. Hybrid vs Sativa
+
+mask_hvs = y_multi.isin([2, 0])
+X_hvs = X_multi[mask_hvs]
+y_hvs = y_multi[mask_hvs]
+
+# SVC
+svc_hvs = Pipeline([
+    ("scaler", StandardScaler()),
+    ("svc", SVC(kernel="rbf"))
+])
+
+cv_scores = cross_val_score(svc_hvs, X_hvs, y_hvs, cv=5, scoring="accuracy")
+display(HTML("<b>SVC OvO — Hybrid vs Sativa (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+svc_hvs_fitted = svc_hvs.fit(X_hvs, y_hvs)
+preds = svc_hvs_fitted.predict(X_hvs)
+
+display(HTML("<b>SVC OvO — Hybrid vs Sativa (Confusion Matrix):</b>"))
+print(confusion_matrix(y_hvs, preds))
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+#  Logistic Regression 
+lr_hvs = Pipeline([
+    ("scaler", StandardScaler()),
+    ("lr", LogisticRegression(max_iter=500))
+])
+
+cv_scores = cross_val_score(lr_hvs, X_hvs, y_hvs, cv=5, scoring="accuracy")
+display(HTML("<b>LR OvO — Hybrid vs Sativa (CV Accuracy):</b>"))
+print(round(cv_scores.mean(), 4))
+
+lr_hvs_fitted = lr_hvs.fit(X_hvs, y_hvs)
+preds = lr_hvs_fitted.predict(X_hvs)
+
+display(HTML("<b>LR OvO — Hybrid vs Sativa (Confusion Matrix):</b>"))
+print(confusion_matrix(y_hvs, preds))
+
+```
+
+
+#### **Q4: Interpretation of OvO Results (SVC and Logistic Regression)**
+
+Across the six one-vs-one (OvO) comparisons, overall performance was relatively balanced between the two model types, but consistent trends emerged regarding which strain pairs were easiest and hardest to separate.
+
+#### **Best-Performing Model**
+
+The strongest result came from **`LR OvO — Indica vs Hybrid`**, which achieved the highest cross-validated accuracy (**0.8390**) among all six models.
+This pairing is intuitively one of the easiest comparisons because **`indica`** and **`hybrid`** strains tend to differ more systematically in their effect and flavor profiles. Hybrids typically share partial characteristics with both extremes, but they still retain enough structure for linear models like logistic regression to separate them effectively.
+
+#### **Worst-Performing Model**
+
+The lowest accuracy was found in **`SVC OvO — Indica vs Sativa`**, with an accuracy of **0.7316**.
+This result makes sense because **`indica`** and **`sativa`** often represent the two ends of a continuum, but their chemical and effect profiles show substantial overlap. Many strains labeled as pure indica or pure sativa still share terpene and cannabinoid patterns, making this boundary inherently blurry. As a result, it is no surprise that both SVC and LR performed weakest on this pair.
+
+#### **Comparison Across Strain Pairs**
+
+* **Easiest to classify:**
+  Models performed best on **`indica` vs `hybrid`**, likely because hybrids cluster nearer the center of the strain space while indicas occupy a more distinct region.
+
+* **Moderate difficulty:**
+  **`hybrid` vs `sativa`** showed middle-range performance, which is intuitive since hybrids often resemble sativas more closely than they resemble indicas.
+
+* **Hardest to classify:**
+  **`indica` vs `sativa`** consistently yielded the lowest accuracies for both SVC and LR, highlighting the natural overlap between these two categories.
+
+#### **Summary**
+
+Overall, logistic regression performed slightly better than SVC in several comparisons, but both models showed the same ordering of difficulty across strain pairs. The results align well with domain expectations: **`indica` and `sativa`** exhibit the greatest overlap, **hybrids** sit in the middle, and the most reliably separable boundary is **`indica` vs `hybrid`**.
+
+
+#### **Q5**
+
+If the full three-class response variable were passed directly into the `LogisticRegression` function, the model would automatically use a **one-vs-rest (OvR)** strategy. This is the default multiclass handling for logistic regression in sklearn. Under OvR, the model fits one binary classifier for each class, comparing that class against all remaining observations. Therefore, logistic regression would not create pairwise comparisons on its own. It would default to the OvR framework unless manually overridden.
+
+For `SVC`, the default behavior is different. By default, `SVC` uses a **one-vs-one (OvO)** strategy for multiclass problems. This means the model automatically fits a binary classifier for every pair of classes and then uses a voting scheme to make predictions. As a result, when the full multiclass target is supplied, `SVC` handles the multiclass structure internally using OvO rather than OvR.
+
+

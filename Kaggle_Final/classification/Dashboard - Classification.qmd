@@ -6,9 +6,8 @@ format:
     theme: cosmo
     orientation: rows
     sidebar: false
-    html:
-      allow-html: true
-      embed-resources: true
+    allow-html: true
+    embed-resources: true
 
 execute:
   echo: false

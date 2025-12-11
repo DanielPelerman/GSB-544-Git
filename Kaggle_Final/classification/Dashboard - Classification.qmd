@@ -8,6 +8,7 @@ format:
     sidebar: false
     html:
       allow-html: true
+      embed-resources: true
 
 execute:
   echo: false

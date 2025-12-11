@@ -5,6 +5,8 @@ format:
     theme: cosmo
     orientation: rows
     sidebar: false
+    html:
+        embed-resources: true 
 execute:
   echo: false       # hide code globally
   warning: false    # hide warnings

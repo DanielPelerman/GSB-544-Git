@@ -1,0 +1,36 @@
+---
+title: "Kaggle Competition - Regression"
+format:
+  html:
+    embed-resources: true
+---
+
+### Part 0: Data Summary and Cleaning
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+import pandas as pd
+import numpy as np
+
+train_data = pd.read_csv("train_data.csv")
+test_data = pd.read_csv("test_data.csv")
+
+train_data.head()
+train_data.shape
+train_data.columns
+
+train_data.describe()
+train_data.describe(include='object')
+
+train_data.isnull().sum()
+train_data.isnull().sum().sort_values(ascending=False)
+
+train_data.dtypes
+
+train_data["SalePrice"].describe()
+np.log(train_data["SalePrice"]).describe()
+
+```

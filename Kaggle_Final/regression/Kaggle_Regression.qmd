@@ -1,0 +1,369 @@
+---
+title: "Kaggle Competition - Regression"
+format:
+  html:
+    embed-resources: true
+---
+
+### Part 0: Data Summary and Cleaning
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+import pandas as pd
+import numpy as np
+from IPython.display import display, HTML
+
+train_data = pd.read_csv("train_data.csv")
+test_data = pd.read_csv("test_data.csv")
+
+display(HTML("<b>HEAD:</b>"))
+print(train_data.head())
+
+display(HTML("<b>SHAPE:</b>"))
+print(train_data.shape)
+
+display(HTML("<b>MISSING VALUES:</b>"))
+print(train_data.isnull().sum())
+
+display(HTML("<b>DATA TYPES:</b>"))
+print(train_data.dtypes)
+
+display(HTML("<b>SALEPRICE SUMMARY:</b>"))
+print(train_data["SalePrice"].describe())
+
+display(HTML("<b>LOG SALEPRICE SUMMARY:</b>"))
+print(np.log(train_data["SalePrice"]).describe())
+
+```
+
+<b>Data Summary (not needed for dashboard):</b>  
+
+The training dataset contains 2,197 observations and 25 variables, including the target variable `SalePrice`. A review of the first several rows shows a mixture of numerical features (such as `Lot Frontage`, `Lot Area`, `Overall Qual`, and `Gr Liv Area`) and categorical features (such as `Street`, `Neighborhood`, `Bldg Type`, and `Sale Type`). 
+
+A missing values check indicates that the dataset is mostly complete, with only two variables requiring attention. `Lot Frontage` has 362 missing values, which is substantial and will need to be imputed. `Electrical` has 1 missing value, which can be handled with simply replacing in the N/A value with the most common occuring value (the mode). All other variables have full data. The dataset also includes a mix of numerical and categorical data types; categorical variables (e.g., Neighborhood, Roof Style, Heating, Central Air) will require one-hot encoding prior to modeling.
+
+The distribution of `SalePrice` is right-skewed, with a mean of approximately $182,377 and a median of $163,500. Prices range from $13,100 to $755,000. After applying a log transformation, the distribution of `log(SalePrice)` becomes much more symmetric, with reduced skewness and a mean of approximately 12.03. This confirms that modeling `log(SalePrice)` is appropriate and aligns with the competition’s evaluation metric (RMSE computed on log values).
+
+Overall, the data is clean and well-structured, with only minor imputation required and several categorical variables needing encoding. The log-transformed target behaves as expected, supporting the decision to model the logarithm of `SalePrice` during regression.
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+train_data = pd.read_csv("train_data.csv")
+test_data = pd.read_csv("test_data.csv")
+
+#  IMPUTE LOT FRONTAGE (NUMERIC) 
+lot_frontage_median = train_data["Lot Frontage"].median()
+
+train_data["Lot Frontage"] = train_data["Lot Frontage"].fillna(lot_frontage_median)
+test_data["Lot Frontage"] = test_data["Lot Frontage"].fillna(lot_frontage_median)
+
+#  IMPUTE ELECTRICAL (CATEGORICAL) 
+electrical_mode = train_data["Electrical"].mode()[0]
+
+train_data["Electrical"] = train_data["Electrical"].fillna(electrical_mode)
+test_data["Electrical"] = test_data["Electrical"].fillna(electrical_mode)
+
+# Confirm no missing values remain - only needed for myself, can comment out of actual report
+# print(train_data.isnull().sum())
+# print(test_data.isnull().sum())
+
+```
+
+### Data Pre-Processing
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# define numeric and categorical columns
+numeric_cols = train_data.select_dtypes(include=['int64', 'float64']).columns.tolist()
+numeric_cols.remove("SalePrice")      # Remove target
+numeric_cols.remove("PID")            # Remove ID (not predictive)
+
+categorical_cols = train_data.select_dtypes(include=['object']).columns.tolist()
+
+display(HTML("<b>Numerical Columns:</b>"))
+display(numeric_cols)
+
+display(HTML("<b>Categorical Columns:</b>"))
+display(categorical_cols)
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+import numpy as np
+
+#  preprocessing steps
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', StandardScaler(), numeric_cols),
+        ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_cols)
+    ]
+)
+
+X = train_data.drop(columns=["SalePrice", "PID"])
+y = np.log(train_data["SalePrice"])
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+from sklearn.linear_model import Ridge
+# models
+
+# Linear Regression 
+lin_model = LinearRegression()
+
+lin_pipeline = Pipeline(steps=[
+    ('preprocess', preprocessor),
+    ('model', lin_model)
+])
+
+lin_pipeline.fit(X, y)
+
+X_test = test_data.drop(columns=["PID"])
+
+# linear predictions
+lin_log_preds = lin_pipeline.predict(X_test)
+lin_final_preds = np.exp(lin_log_preds)
+
+
+# ridge regression
+ridge_model = Ridge(alpha=1.0)
+
+ridge_pipeline = Pipeline(steps=[
+    ('preprocess', preprocessor),
+    ('model', ridge_model)
+])
+
+ridge_pipeline.fit(X, y)
+
+# ridge predictions
+ridge_log_preds = ridge_pipeline.predict(X_test)
+ridge_final_preds = np.exp(ridge_log_preds)
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+from sklearn.model_selection import cross_val_score
+import numpy as np
+
+# RMSE scoring uses negative mean squared error 
+lin_scores = cross_val_score(
+    lin_pipeline, X, y,
+    scoring="neg_mean_squared_error",
+    cv=5
+)
+
+ridge_scores = cross_val_score(
+    ridge_pipeline, X, y,
+    scoring="neg_mean_squared_error",
+    cv=5
+)
+
+# Convert negative MSE to RMSE
+lin_rmse_cv = np.sqrt(-lin_scores)
+ridge_rmse_cv = np.sqrt(-ridge_scores)
+
+print("Linear Regression CV RMSE:", lin_rmse_cv.mean())
+print("Ridge Regression CV RMSE:", ridge_rmse_cv.mean())
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# testing if squared terms improve model
+# squared terms
+train_data["Gr Liv Area Squared"] = train_data["Gr Liv Area"] ** 2
+test_data["Gr Liv Area Squared"] = test_data["Gr Liv Area"] ** 2
+
+train_data["Overall Qual Squared"] = train_data["Overall Qual"] ** 2
+test_data["Overall Qual Squared"] = test_data["Overall Qual"] ** 2
+
+# Update X and y
+X = train_data.drop(columns=["SalePrice", "PID"])
+y = np.log(train_data["SalePrice"])
+
+# Update numeric and categorical lists
+numeric_cols = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
+categorical_cols = X.select_dtypes(include=['object']).columns.tolist()
+
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.linear_model import LinearRegression, Ridge
+from sklearn.pipeline import Pipeline
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', StandardScaler(), numeric_cols),
+        ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_cols)
+    ]
+)
+
+lin_pipeline = Pipeline(steps=[
+    ('preprocess', preprocessor),
+    ('model', LinearRegression())
+])
+
+ridge_pipeline = Pipeline(steps=[
+    ('preprocess', preprocessor),
+    ('model', Ridge(alpha=1.0))
+])
+
+from sklearn.model_selection import cross_val_score
+import numpy as np
+
+# Linear Regression CV RMSE
+lin_scores = cross_val_score(
+    lin_pipeline, X, y,
+    scoring="neg_mean_squared_error",
+    cv=5
+)
+lin_rmse_cv = np.sqrt(-lin_scores)
+
+print("Linear Regression CV RMSE (with squared terms):", lin_rmse_cv.mean())
+
+# Ridge Regression CV RMSE
+ridge_scores = cross_val_score(
+    ridge_pipeline, X, y,
+    scoring="neg_mean_squared_error",
+    cv=5
+)
+ridge_rmse_cv = np.sqrt(-ridge_scores)
+
+print("Ridge Regression CV RMSE (with squared terms):", ridge_rmse_cv.mean())
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# Refit the ridge model on the FULL training data
+ridge_pipeline.fit(X, y)
+
+# Prepare test predictors
+X_test = test_data.drop(columns=["PID"])
+
+# Predict log sale price
+ridge_log_preds = ridge_pipeline.predict(X_test)
+
+# Convert back to real dollar values
+ridge_final_preds = np.exp(ridge_log_preds)
+
+# Create submission dataframe
+submission = pd.DataFrame({
+    "PID": test_data["PID"],
+    "SalePrice": ridge_final_preds
+})
+
+# Save to CSV
+submission.to_csv("submission.csv", index=False)
+
+submission.head()
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# Load the submission file
+sub = pd.read_csv("submission.csv")
+
+# Check number of rows
+print("Number of rows:", len(sub))
+
+# Show first few rows
+print(sub.head())
+
+# Check the columns
+print("Columns:", sub.columns.tolist())
+
+```
+
+
+```{python}
+# get csvs to create dashboard
+rmse_df = pd.DataFrame({
+    "Model": ["Linear", "Ridge"],
+    "RMSE": [0.137405165, 0.137253498]   
+})
+
+rmse_df.to_csv("rmse_results.csv", index=False)
+
+#feature importance file
+coefs = ridge_pipeline.named_steps["model"].coef_
+
+ohe = ridge_pipeline.named_steps["preprocess"].named_transformers_["cat"]
+cat_features = ohe.get_feature_names_out(categorical_cols)
+final_feature_names = np.concatenate([numeric_cols, cat_features])
+
+coef_df = pd.DataFrame({
+    "Feature": final_feature_names,
+    "Coefficient": coefs
+})
+
+coef_df.to_csv("ridge_coef.csv", index=False)
+
+#predicted vs actual
+pred_vs_actual = pd.DataFrame({
+    "Actual": np.exp(y),                # back-transform
+    "Predicted": np.exp(ridge_pipeline.predict(X))
+})
+
+pred_vs_actual.to_csv("pred_vs_actual.csv", index=False)
+
+
+```
+
+
+```{python}
+from sklearn.model_selection import learning_curve
+import numpy as np
+import pandas as pd
+
+train_sizes, train_scores, val_scores = learning_curve(
+    estimator=ridge_pipeline,   # USE THE FULL PIPELINE
+    X=X,
+    y=y,
+    cv=5,
+    scoring="neg_mean_squared_error",
+    train_sizes=np.linspace(0.1, 1.0, 8),
+    n_jobs=-1
+)
+
+lc_df = pd.DataFrame({
+    "train_size": train_sizes,
+    "train_rmse": np.sqrt(-train_scores.mean(axis=1)),
+    "val_rmse": np.sqrt(-val_scores.mean(axis=1))
+})
+
+lc_df.to_csv("learning_curve.csv", index=False)
+
+print("Saved learning_curve.csv!")
+
+```

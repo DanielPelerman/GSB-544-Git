@@ -1,0 +1,226 @@
+---
+title: "Ames Housing Regression Dashboard"
+format:
+  dashboard:
+    theme: cosmo
+    orientation: rows
+    sidebar: false
+execute:
+  echo: false       # hide code globally
+  warning: false    # hide warnings
+  message: false    # hide import messages
+---
+
+
+```{python}
+#| echo: false
+#| height: 120
+#| layout-ncol: 2
+#| standalone: true 
+
+import warnings
+warnings.filterwarnings("ignore")
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from IPython.display import HTML, Markdown
+
+sns.set(style="whitegrid")
+
+rmse = pd.read_csv("rmse_results.csv")
+coef = pd.read_csv("ridge_coef.csv")
+pred = pd.read_csv("pred_vs_actual.csv")
+lc = pd.read_csv("learning_curve.csv")
+
+ridge_rmse = rmse.loc[rmse["Model"]=="Ridge","RMSE"].iloc[0]
+linear_rmse = rmse.loc[rmse["Model"]=="Linear","RMSE"].iloc[0]
+
+from IPython.display import HTML
+
+#| echo: false
+#| layout-ncol: 2
+
+from IPython.display import HTML
+
+HTML(f"""
+<div style="
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+">
+
+    <!-- Ridge RMSE -->
+    <div style="
+        width: 180px;
+        background:#4e79a7;
+        color:white;
+        padding:10px;
+        border-radius:8px;
+        text-align:center;
+    ">
+        <h4 style="margin:0; font-size:20px;">Ridge RMSE</h4>
+        <p style="font-size:26px; margin-top:4px;">{ridge_rmse:.4f}</p>
+    </div>
+
+    <!-- Linear RMSE -->
+    <div style="
+        width: 180px;
+        background:#f28e2b;
+        color:white;
+        padding:10px;
+        border-radius:8px;
+        text-align:center;
+    ">
+        <h4 style="margin:0; font-size:20px;">Linear RMSE</h4>
+        <p style="font-size:26px; margin-top:4px;">{linear_rmse:.4f}</p>
+    </div>
+
+</div>
+""")
+
+
+_ = None
+
+```
+
+
+
+
+```{python}
+#| echo: false
+#| height: 565
+#| layout-ncol: 2
+
+# =============================
+# Predicted vs Actual Scatterplot
+# =============================
+
+_ = plt.figure(figsize=(6,5))
+_ = plt.scatter(pred["Actual"], pred["Predicted"], alpha=0.3, color="#4e79a7")
+
+lims = [
+    min(pred["Actual"].min(), pred["Predicted"].min()),
+    max(pred["Actual"].max(), pred["Predicted"].max())
+]
+
+plt.plot(lims, lims, 'r--')
+
+_ = plt.xlabel("Actual Sale Price")
+_ = plt.ylabel("Predicted Sale Price")
+_ = plt.title("Predicted vs Actual Sale Prices")
+_ = plt.tight_layout()
+_ = plt.show()
+_ = None
+
+_ = None
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set(style="whitegrid")
+
+# Load coefficients (this assumes your CSV has: Feature, Coefficient columns)
+coef = pd.read_csv("ridge_coef.csv")
+
+# Take absolute value for importance ranking
+coef["Importance"] = coef["Coefficient"].abs()
+
+# Sort and select top 10 most important features
+top10 = coef.sort_values("Importance", ascending=False).head(10)
+
+# Plot
+_ = plt.figure(figsize=(6,6))
+sns.barplot(
+    data=top10,
+    x="Importance",
+    y="Feature",
+    palette="Blues_r"
+)
+
+_ = plt.title("Top 10 Most Influential Features")
+_ = plt.xlabel("Coefficient Magnitude")
+_ = plt.ylabel("Feature")
+_ = plt.tight_layout()
+_ = plt.show()
+
+```
+
+
+
+
+```{python}
+#| echo: false
+#| layout-ncol: 2
+#| height: 380
+
+
+import matplotlib.pyplot as plt
+
+
+plt.figure(figsize=(8,3))
+
+plt.plot(lc["train_size"], lc["train_rmse"], label="Training RMSE")
+plt.plot(lc["train_size"], lc["val_rmse"], label="Validation RMSE")
+
+_ = plt.title("Learning Curve (Ridge Regression)")
+_ = plt.xlabel("Training Set Size")
+_ = plt.ylabel("RMSE")
+plt.legend()
+
+plt.show()
+
+
+# =============================
+# Residual Distribution
+# =============================
+
+pred["Residual"] = pred["Predicted"] - pred["Actual"]
+
+_ = plt.figure(figsize=(6,4))
+_ = plt.hist(pred["Residual"], bins=30, 
+         color="#59a14f", edgecolor="black", alpha=0.8)
+
+_ = plt.axvline(0, color="red", linestyle="--")
+
+_ = plt.title("Residual Distribution")
+_ = plt.xlabel("Residual")
+_ = plt.ylabel("Frequency")
+_ = plt.tight_layout()
+_ = plt.show()
+
+# Prevent Quarto from printing matplotlib object reprs
+_ = None
+
+```
+
+
+```{python}
+#| echo: false
+#| height: 320
+
+from IPython.display import HTML
+
+HTML("""
+<div style='max-width:900px; margin:auto; text-align:left; padding:10px;'>
+
+    <h2 style='text-align:center; margin-bottom:20px;'>
+        Dashboard Summary
+    </h2>
+
+    <ul style="font-size:16px; line-height:1.6;">
+        <li>Ridge Regression achieved the best predictive performance, producing a slightly lower RMSE than Linear Regression.</li>
+        <li>Key predictors driving sale prices include square footage (Gr Liv Area), overall functionality (Functional_Sal), and squared living area, all showing strong, interpretable influence in the coefficient importance chart.</li>
+        <li>The Learning Curve indicates stable model behavior: Training RMSE decreases quickly with additional data, while validation RMSE levels off, suggesting the model is neither overfitting nor underfitting and benefits moderately from larger sample sizes.</li>
+        <li>Predicted vs. Actual values follow the 45-degree line closely, showing strong generalization and low systematic error.</li>
+        <li>Residuals are tightly centered around zero with limited spread, indicating minimal bias and well-distributed model errors.</li>
+    </ul>
+
+</div>
+""")
+
+
+```

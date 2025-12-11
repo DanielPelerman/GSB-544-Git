@@ -1,0 +1,308 @@
+---
+title: "Kaggle Competition - Clsasification"
+format: html
+---
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+import pandas as pd
+
+train = pd.read_csv("cat_train.csv")
+test = pd.read_csv("cat_test.csv")
+
+print(train.head())
+print()
+print(train.info())
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+X = train.drop(columns=["political_affiliation"])
+y = train["political_affiliation"]
+
+numeric_features = X.select_dtypes(include=["int64", "float64"]).columns
+categorical_features = X.select_dtypes(include=["object"]).columns
+
+numeric_features, categorical_features
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+
+preprocess = ColumnTransformer(
+    transformers=[
+        ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+        ("num", "passthrough", numeric_features)
+    ]
+)
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+import warnings
+warnings.filterwarnings("ignore")
+
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+log_reg_pipeline = Pipeline([
+    ("preprocess", preprocess),
+    ("model", LogisticRegression(max_iter=3000))
+])
+
+log_reg_scores = cross_val_score(
+    log_reg_pipeline,
+    X, y,
+    cv=5,
+    scoring="accuracy"
+)
+
+log_reg_mean_accuracy = log_reg_scores.mean()
+print('Logistic Regression Accuracy:')
+log_reg_mean_accuracy
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+
+dt_pipeline = Pipeline([
+    ("preprocess", preprocess),
+    ("model", DecisionTreeClassifier(random_state=321))
+])
+
+dt_scores = cross_val_score(
+    dt_pipeline,
+    X, y,
+    cv=5,
+    scoring="accuracy"
+)
+
+dt_mean_accuracy = dt_scores.mean()
+print('Decision Tree Accuracy:')
+
+dt_mean_accuracy
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# tuning
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+import numpy as np
+
+C_values = [0.01, 0.1, 1, 5, 10]
+
+C_accuracies = {}
+
+for C in C_values:
+    pipeline = Pipeline([
+        ("preprocess", preprocess),
+        ("model", LogisticRegression(C=C, max_iter=3000))
+    ])
+    scores = cross_val_score(pipeline, X, y, cv=5, scoring="accuracy")
+    C_accuracies[C] = scores.mean()
+
+C_accuracies
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+
+# Final model using best C
+final_model = Pipeline([
+    ("preprocess", preprocess),
+    ("model", LogisticRegression(C=0.1, max_iter=3000))
+])
+
+# Fit model on full training data
+final_model.fit(X, y)
+
+# Predict on the test dataset
+test_predictions = final_model.predict(test)
+
+# Create submission DataFrame
+submission = pd.DataFrame({
+    "id_num": test["id_num"],
+    "political_affiliation_predicted": test_predictions
+})
+
+
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+submission["political_affiliation_predicted"].value_counts()
+
+```
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+# adding interaction terms
+
+
+
+# Interaction 2: Q4 × Q11
+X["Q4_Q11"] = X["Q4"] + "_" + X["Q11"]
+test["Q4_Q11"] = test["Q4"] + "_" + test["Q11"]
+
+# Interaction 3: Q4 × Q15
+X["Q4_Q15"] = X["Q4"] + "_" + X["Q15"].astype(str)
+test["Q4_Q15"] = test["Q4"] + "_" + test["Q15"].astype(str)
+
+
+
+numeric_features = X.select_dtypes(include=["int64", "float64"]).columns
+categorical_features = X.select_dtypes(include=["object"]).columns
+
+preprocess = ColumnTransformer(
+    transformers=[
+        ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+        ("num", "passthrough", numeric_features)
+    ]
+)
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+log_reg_interactions_pipeline = Pipeline([
+    ("preprocess", preprocess),
+    ("model", LogisticRegression(C=0.1, max_iter=3000))
+])
+
+interaction_scores = cross_val_score(
+    log_reg_interactions_pipeline,
+    X, y,
+    cv=5,
+    scoring="accuracy"
+)
+
+interaction_mean_accuracy = interaction_scores.mean()
+interaction_mean_accuracy
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+
+# support vector machine
+X = train.drop(columns=["political_affiliation"])
+y = train["political_affiliation"]
+
+test = pd.read_csv("cat_test.csv")
+
+numeric_features = X.select_dtypes(include=["int64", "float64"]).columns
+categorical_features = X.select_dtypes(include=["object"]).columns
+
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+
+preprocess = ColumnTransformer(
+    transformers=[
+        ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+        ("num", "passthrough", numeric_features)
+    ]
+)
+
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC
+from sklearn.model_selection import cross_val_score
+
+svm_pipeline = Pipeline([
+    ("preprocess", preprocess),
+    ("model", LinearSVC(C=1.0))
+])
+
+svm_scores = cross_val_score(
+    svm_pipeline,
+    X, y,
+    cv=5,
+    scoring="accuracy"
+)
+
+svm_mean_accuracy = svm_scores.mean()
+print("SVC Accuracy:")
+svm_mean_accuracy
+
+```
+
+```{python}
+#| echo: true
+#| code-fold: true
+for c in [.0001, .001, 0.01, 0.1, 1, 5, 10]:
+    model = Pipeline([
+        ("preprocess", preprocess),
+        ("model", LinearSVC(C=c))
+    ])
+    scores = cross_val_score(model, X, y, cv=5, scoring="accuracy")
+    print(c, scores.mean())
+
+```
+
+
+
+
+```{python}
+#| echo: true
+#| code-fold: true
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC
+
+# Final Linear SVC model using best C value
+final_svm_model = Pipeline([
+    ("preprocess", preprocess),
+    ("model", LinearSVC(C=0.01))
+])
+
+# Fit model on full training data
+final_svm_model.fit(X, y)
+
+# Predict on the test dataset
+svm_test_predictions = final_svm_model.predict(test)
+
+# Create submission DataFrame
+submission_svm = pd.DataFrame({
+    "id_num": test["id_num"],
+    "political_affiliation_predicted": svm_test_predictions
+})
+
+# Save to CSV
+submission_svm.to_csv("submission.csv", index=False)
+
+submission_svm.head()
+
+```

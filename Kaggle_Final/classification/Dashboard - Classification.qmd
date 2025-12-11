@@ -1,0 +1,291 @@
+---
+title: "Political Party Classification Dashboard"
+
+format:
+  dashboard:
+    theme: cosmo
+    orientation: rows
+    sidebar: false
+    html:
+      allow-html: true
+
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+
+
+```{python}
+#| echo: false
+
+import pandas as pd
+import numpy as np
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import confusion_matrix, classification_report
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+```
+
+
+```{python}
+#| echo: false
+#| height: 120
+#| width: 25%
+#| layout-ncol: 2
+#| standalone: true   # prevents Quarto from columnizing the HTML
+
+
+train = pd.read_csv("cat_train.csv")
+test = pd.read_csv("cat_test.csv")
+
+X = train.drop(columns=["political_affiliation"])
+y = train["political_affiliation"]
+
+numeric_features = X.select_dtypes(include=["int64", "float64"]).columns
+categorical_features = X.select_dtypes(include=["object"]).columns
+
+preprocess = ColumnTransformer(
+    transformers=[
+        ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+        ("num", StandardScaler(), numeric_features)
+    ]
+)
+
+# Logistic Regression model (best C = 0.1)
+log_model = Pipeline([
+    ("preprocess", preprocess),
+    ("model", LogisticRegression(C=0.1, max_iter=3000))
+])
+
+# Linear SVC model (best C = 0.01)
+svc_model = Pipeline([
+    ("preprocess", preprocess),
+    ("model", LinearSVC(C=0.01))
+])
+
+log_accuracy = cross_val_score(log_model, X, y, cv=5, scoring="accuracy").mean()
+svc_accuracy = cross_val_score(svc_model, X, y, cv=5, scoring="accuracy").mean()
+
+import matplotlib.pyplot as plt
+
+from IPython.display import HTML
+
+#| echo: false
+
+from IPython.display import HTML
+
+
+
+from IPython.display import HTML
+
+HTML(f"""
+<div style="
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 60px;   /* spacing between boxes */
+    margin-top: 15px;
+">
+
+    <!-- Logistic Accuracy Box -->
+    <div style="
+        width: 240px;
+        background:#4e79a7;
+        color:white;
+        padding:18px;
+        border-radius:12px;
+        text-align:center;
+        font-size:16px;
+    ">
+        <div style="font-size:20px;">Logistic Regression Accuracy</div>
+        <div style="font-size:26px; font-weight:bold; margin-top:4px;">
+            {log_accuracy:.4f}
+        </div>
+    </div>
+
+    <!-- SVC Accuracy Box -->
+    <div style="
+        width: 240px;
+        background:#f28e2b;
+        color:white;
+        padding:18px;
+        border-radius:12px;
+        text-align:center;
+        font-size:16px;
+    ">
+        <div style="font-size:20px;">Linear SVC Accuracy</div>
+        <div style="font-size:26px; font-weight:bold; margin-top:4px;">
+            {svc_accuracy:.4f}
+        </div>
+    </div>
+
+</div>
+""")
+
+
+
+
+
+
+```
+
+```{python}
+_ = log_model.fit(X, y)
+_ = svc_model.fit(X, y)
+
+
+# Logistic confusion matrix
+_ = log_preds = log_model.predict(X)
+_ = svc_preds = svc_model.predict(X)
+
+_ = log_cm = confusion_matrix(y, log_preds)
+_ = svc_cm = confusion_matrix(y, svc_preds)
+```
+
+
+```{python}
+#| echo: false
+#| layout-ncol: 2
+#| height: 320
+
+from IPython.display import HTML
+
+log_report = classification_report(y, log_preds)
+svc_report = classification_report(y, svc_preds)
+
+HTML(f"""
+<div style="display: flex; flex-direction: row; column-gap: 20px; width: 100%;">
+
+    <div style="
+        display: inline-block;
+        width: 48%;
+        background: #f8f8f8;
+        padding: 15px;
+        border-radius: 8px;
+        vertical-align: top;
+    ">
+        <h4>Logistic Regression Classification Report</h4>
+        <pre style="font-size: 13px; margin-top: 8px;">{log_report}</pre>
+    </div>
+
+    <div style="
+        display: inline-block;
+        width: 48%;
+        background: #f8f8f8;
+        padding: 15px;
+        border-radius: 8px;
+        vertical-align: top;
+    ">
+        <h4>Linear SVC Classification Report</h4>
+        <pre style="font-size: 13px; margin-top: 8px;">{svc_report}</pre>
+    </div>
+
+</div>
+""")
+
+```
+
+```{python}
+#| echo: false
+#| layout-ncol: 2
+#| height: 480
+
+
+# Extract coefficients
+log_reg = log_model.named_steps["model"]
+encoder = log_model.named_steps["preprocess"].named_transformers_["cat"]
+
+feature_names = (
+    list(encoder.get_feature_names_out(categorical_features)) +
+    list(numeric_features)
+)
+
+coefficients = log_reg.coef_
+
+# For multiclass logistic, use mean absolute coefficient across classes
+importance = np.mean(np.abs(coefficients), axis=0)
+
+feat_df = pd.DataFrame({
+    "feature": feature_names,
+    "importance": importance
+}).sort_values(by="importance", ascending=False).head(20)
+#| layout-ncol: 2
+
+# --- Confusion Matrix ---
+_ = fig1, ax1 = plt.subplots(figsize=(7,5))
+_ = sns.heatmap(log_cm, annot=True, fmt="d", cmap="Blues", ax=ax1)
+_ = ax1.set_title("Logistic Regression Confusion Matrix")
+_ = plt.tight_layout()
+_ = plt.show()
+
+# --- Feature Importance ---
+_ = fig2, ax2 = plt.subplots(figsize=(7,5))
+_ = sns.barplot(data=feat_df, x="importance", y="feature", ax=ax2)
+_ = ax2.set_title("Top Logistic Regression Feature Importances")
+_ = plt.tight_layout()
+_ = plt.show()
+
+
+```
+
+
+
+
+
+
+```{python}
+#| echo: false
+
+def explore_prediction(input_dict):
+    """
+    input_dict should be a dictionary mapping each feature name to a value.
+    Example:
+    {"Q1": "Male", "Q2": 30, "Q4": "Liberal", ...}
+    """
+
+    user_df = pd.DataFrame([input_dict])
+    pred_log = log_model.predict(user_df)[0]
+    pred_svc = svc_model.predict(user_df)[0]
+    
+    print("Logistic Regression Prediction:", pred_log)
+    print("Linear SVC Prediction:", pred_svc)
+
+```
+
+
+```{python}
+#| height: 320
+
+from IPython.display import HTML
+
+HTML("""
+<div style='max-width:900px; margin:auto; text-align:left; padding:10px;'>
+
+    <h2 style='text-align:center; margin-bottom:20px;'>Dashboard Summary</h2>
+
+    <ul style="font-size:16px; line-height:1.6;">
+        <li>This dashboard compares two classification models, Logistic Regression and Linear SVC, for predicting political affiliation.</li>
+        <li>Logistic Regression achieved the higher cross-validated accuracy (0.6216), outperforming the Linear SVC (0.5980).</li>
+        <li>Because Logistic Regression is both more accurate and interpretable, only its confusion matrix and feature importance plot are shown.</li>
+        <li>Feature importance highlights which survey responses most strongly influence political affiliation predictions.</li>
+        <li>Both models' classification reports provide precision, recall, and f1-score across all classes.</li>
+        <li>Overall, Logistic Regression offers the best balance of interpretability and predictive performance for this dataset.</li>
+    </ul>
+
+</div>
+""")
+
+
+```
